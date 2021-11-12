@@ -31,7 +31,52 @@ Describe how you created a real-time priority task.
 The output of diff or diffconfig when comparing the config files for your 
 mainline fallback kernel and your MuQSS kernel
 
-    /* TODO */
+-ANDROID_BINDERFS n
+-ANDROID_BINDER_DEVICES "binder"
+-ANDROID_BINDER_IPC_SELFTEST n
+-BPF_UNPRIV_DEFAULT_OFF y
+-CFS_BANDWIDTH y
+-CGROUP_CPUACCT y
+-FAIR_GROUP_SCHED y
+-INTEL_IOMMU_DEFAULT_OFF n
+-INTEL_IOMMU_DEFAULT_ON_INTGPU_OFF y
+-LOCK_DOWN_IN_EFI_SECURE_BOOT y
+-MTD_PSTORE n
+-NUMA_BALANCING y
+-NUMA_BALANCING_DEFAULT_ENABLED y
+-PSTORE_BLK m
+-PSTORE_BLK_BLKDEV ""
+-PSTORE_BLK_KMSG_SIZE 64
+-PSTORE_BLK_MAX_REASON 2
+-PSTORE_ZONE m
+-RESET_BRCMSTB_RESCAL n
+-RT_GROUP_SCHED n
+-SCHED_AUTOGROUP y
+-SECURITY_PERF_EVENTS_RESTRICT y
+-X86_X32_DISABLED y
+-XILINX_ZYNQMP_DPDMA n
+ ANDROID_BINDER_IPC m -> n
+ ASHMEM m -> n
+ BLK_DEV_LOOP m -> y
+ CC_VERSION_TEXT "gcc-10 (Debian 10.2.1-6) 10.2.1 20210110" -> "gcc (Debian 10.2.1-6) 10.2.1 20210110"
+ LOCALVERSION "" -> "-ajr2252-muqss"
+ SYSTEM_TRUSTED_KEYS "debian/certs/debian-uefi-certs.pem" -> ""
+ USB_COMMON m -> y
++BATTERY_RT5033 n
++FB_NVIDIA n
++FB_RIVA n
++NTFS_FS n
++RQ_ALL n
++RQ_MC y
++RQ_MC_LLC n
++RQ_NONE n
++RQ_SMP n
++RQ_SMT n
++SCHED_MUQSS y
++SHARERQ 2
++SMT_NICE y
++SYSTEM_REVOCATION_LIST n
++VIDEO_VS6624 n
 
 =================================== P2Q1 end ===================================
 
