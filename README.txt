@@ -8,3 +8,27 @@ The description should indicate whether your solution for the part is working
 or not. You may also want to include anything else you would like to
 communicate to the grader, such as extra functionality you implemented or how
 you tried to fix your non-working code.
+
+Names:
+
+Khyber Sen, ks3343
+Aliza Rabinovitz, ajr2252
+Isabelle Arevalo, ia2422
+
+HW: 6
+
+Part 1:
+
+Part 2:
+
+Part 3:
+
+Part 4:
+
+Part 5:
+
+Part 6:
+
+Part 7:
+
+Part 8:
