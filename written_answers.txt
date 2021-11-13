@@ -141,7 +141,10 @@ without root privileges, and describe the differences.
 Verify Con Kolivas' claim by timing the kernel build-time in both your fallback
 and your MuQSS-patched kernels.
     
-    /* TODO */ 
+Our experiment was to continuously play Youtube videos at high-quality in the background
+on the VM while the kernel was building.
+
+Time for the MuQSS-patched kernel: 8702.66 user,   954.00 system,  0 status
 
 =================================== P4Q1 end ===================================
 
