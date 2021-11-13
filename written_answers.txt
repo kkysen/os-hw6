@@ -84,7 +84,24 @@ mainline fallback kernel and your MuQSS kernel
 Indicate you successfully patched, built, and booted into your MuQSS-enabled 
 Linux kernel.
 
-    /* TODO */ 
+Successfully patched, built, and booted into the MuQSS-enabled Linux kernel.
+The following is the output to sudo dmesg | grep "MuQSS"
+
+[    0.159554] MuQSS possible/present/online CPUs: 128/2/2
+[    0.159555] MuQSS locality CPU 0 to 0: 0
+[    0.159555] MuQSS locality CPU 0 to 1: 4
+[    0.159555] MuQSS locality CPU 1 to 0: 4
+[    0.159556] MuQSS locality CPU 1 to 1: 0
+[    0.159564] MuQSS CPU 0 llc 0 RQ order 0 RQ 0 llc 0
+[    0.159564] MuQSS CPU 0 llc 0 RQ order 1 RQ 1 llc 2
+[    0.159565] MuQSS CPU 1 llc 2 RQ order 0 RQ 1 llc 2
+[    0.159565] MuQSS CPU 1 llc 2 RQ order 1 RQ 0 llc 0
+[    0.159566] MuQSS CPU 0 llc 0 CPU order 0 RQ 0 llc 0
+[    0.159566] MuQSS CPU 0 llc 0 CPU order 1 RQ 1 llc 2
+[    0.159567] MuQSS CPU 1 llc 2 CPU order 0 RQ 1 llc 2
+[    0.159567] MuQSS CPU 1 llc 2 CPU order 1 RQ 0 llc 0
+[    0.159567] MuQSS runqueue share type MC total runqueues: 2
+[    9.019688] MuQSS CPU scheduler v0.205 by Con Kolivas.
 
 =================================== P2Q2 end ===================================
 
