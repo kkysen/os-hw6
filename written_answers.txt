@@ -141,6 +141,14 @@ without root privileges, and describe the differences.
 Verify Con Kolivas' claim by timing the kernel build-time in both your fallback
 and your MuQSS-patched kernels.
     
+Our results after kernel build-time:
+Fallback kernel: 134.00 user,    34.20 system,   0 status
+MuQSS-patch kernel: 164.19 user,    25.39 system,   0 status
+
+Our findings indicate that they have somewhat similar build times in this case,
+although the fallback kernel appears to win against the MuQSS-patch in user space time,
+in terms of time in kernel space the patch beats the original fallback kernel/CFS scheduling
+technique, which leads us to support the Con Kolivas' claim.
 
 =================================== P4Q1 end ===================================
 
@@ -148,16 +156,18 @@ and your MuQSS-patched kernels.
 Design an experiment that you think will highlight MuQSS’s strength. Perform 
 the experiment and report your findings.
 
-Our experiment was to continuously play Youtube videos at high-quality -- specifically, we played
-a playlist of talk show and music videos on Youtube -- in the background
+Our experiment was to continuously play Youtube videos at high-quality -- specifically,
+we played a playlist of talk show and music videos on Youtube -- in the background
 on the VM while the kernel was building. We ran time using the make -j2 command to test these.
-Our command was "sudo /usr/bin/time -f "\t%U user,\t%S system,\t%x status" make -j2."
+Our command was "sudo /usr/bin/time -f "\t%U user,\t%S system,\t%x status" make -j2" while these
+videos were running in the background on the VM (using the VM GUI).
 
 Time for the MuQSS-patched kernel: 139.86 user,    25.29 system,   0 status
 Time for the fallback kernel: 145.64 user,    41.50 system,   0 status
 
 From the results we can see that the experiment validated Con Kolivas' claim that the kernel
-compile time was faster. Although the results were similar for the program in user mode
+compile time was faster, more so than the in question 1 of part 4.
+Although the results were similar for the program in user mode
 (although the MuQss version was still lower), we can see that the time in kernel mode was improved
 with the MuQSS version, cutting down by almost half (41.50 to 25.29).
 
