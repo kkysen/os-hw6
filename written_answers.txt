@@ -141,6 +141,13 @@ without root privileges, and describe the differences.
 Verify Con Kolivas' claim by timing the kernel build-time in both your fallback
 and your MuQSS-patched kernels.
     
+
+=================================== P4Q1 end ===================================
+
+================================== P4Q2 start ==================================
+Design an experiment that you think will highlight MuQSS’s strength. Perform 
+the experiment and report your findings.
+
 Our experiment was to continuously play Youtube videos at high-quality -- specifically, we played
 a playlist of talk show and music videos on Youtube -- in the background
 on the VM while the kernel was building. We ran time using the make -j2 command to test these.
@@ -153,14 +160,6 @@ From the results we can see that the experiment validated Con Kolivas' claim tha
 compile time was faster. Although the results were similar for the program in user mode
 (although the MuQss version was still lower), we can see that the time in kernel mode was improved
 with the MuQSS version, cutting down by almost half (41.50 to 25.29).
-
-=================================== P4Q1 end ===================================
-
-================================== P4Q2 start ==================================
-Design an experiment that you think will highlight MuQSS’s strength. Perform 
-the experiment and report your findings.
-
-    /* TODO */ 
 
 =================================== P4Q2 end ===================================
 
