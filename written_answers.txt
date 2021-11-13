@@ -142,9 +142,13 @@ Verify Con Kolivas' claim by timing the kernel build-time in both your fallback
 and your MuQSS-patched kernels.
     
 Our experiment was to continuously play Youtube videos at high-quality in the background
-on the VM while the kernel was building.
+on the VM while the kernel was building. We ran time using the make -j2 command to test these.
 
-Time for the MuQSS-patched kernel: 8702.66 user,   954.00 system,  0 status
+Time for the MuQSS-patched kernel: 139.86 user,    25.29 system,   0 status
+Time for the fallback kernel: 145.64 user,    41.50 system,   0 status
+
+From the results we can see that the experiment validated Con Kolivas' claim that the kernel
+compile time was faster.
 
 =================================== P4Q1 end ===================================
 
