@@ -96,21 +96,35 @@ the experiment and report your findings.
 ================================== P5Q1 start ==================================
 Briefly describe the advantages and disadvantages of a larger HZ.
 
-    /* TODO */ 
+Advantages: A higher HZ/tick rate means that the timer interrupts
+are more frequent and work can occur more frequently.
+With higher Hz, error, which is 5 milliseconds/Hz is lower,
+which means that there is more accuracy in timing, which is
+important for preemption and functions that use timeouts or rely on timing.
+There is also higher/finer resolution, which means there are better measurement recordings.
+
+Disadvantages: The higher HZ, the more time is spent doing the actual timer interrupts,
+which grows the overhead. This time eventually adds up and can lead to more of the cache memory
+being overused and more power being used.
 
 =================================== P5Q1 end ===================================
 
 ================================== P5Q2 start ==================================
 What is the HZ currently configured for your running Linux system?
 
-    /* TODO */ 
+We created a simple kernel module that on module init prints out the “USER_HZ” variable,
+which is a kernel constant. The HZ currently configured for our running Linux system is 100.
 
 =================================== P5Q2 end ===================================
 
 ================================== P5Q3 start ==================================
 What are jiffies? Explain the relationship between jiffies, HZ, and time.
 
-    /* TODO */ 
+“Jiffies” is a variable that represents the number of ticks/timer interrupts since the system boot.
+The number is generally set to a specific value on boot (in order to better catch overflow)
+and when calculated that initial number is subtracted from the new value.
+The number of HZ in a second is equal to the number of jiffies in a second.
+The relationship between jiffies and time is that seconds are equal to jiffies/HZ.
 
 =================================== P5Q3 end ===================================
 
@@ -123,13 +137,25 @@ Find the current value of jiffies in your system.
     - Why does this large difference exist? (Hint: in 32-bit Linux systems,
       jiffies is a 32-bit value.)
 
-    /* TODO */ 
+In Aliza’s system, jiffies is equal to 4296575070.
+Seconds = jiffies/Hz = 4296575070/100 = 42965750.70/60 = 716095.845 minutes.
+The time reported by the uptime command is 6731.23.
+
+The formula to convert is *TO DO*.
+
+This large difference exists because in 32-bit Linux systems, jiffies is a 32-bit
+val. However, time is 64-bits. This means that jiffies has more overflow and wraparound,
+while the time can continue for longer without overflow, skewing the values.
 
 =================================== P5Q4 end ===================================
 
 ================================== P5Q5 start ==================================
 What are Niffies? How do they differ from Jiffies?
 
-    /* TODO */ 
+Niffies are similar to jiffies except that they are calculated in nanoseconds
+rather than seconds. In addition, niffies are calculated slightly differently
+than jiffies because instead of being overall for the whole system that work off
+the TSC timers for each runqueue, and are periodically synchronized if they cannot be
+(when both runqueues are locked).
 
 =================================== P5Q5 end ===================================
