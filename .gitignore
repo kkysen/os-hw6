@@ -2,6 +2,7 @@ compile_commands.json
 /.clang-format
 .vscode/
 .gdb_history
+README.md
 
 # Common editor swap files
 .*.swp

@@ -290,6 +290,9 @@ untag name:
     git push --delete origin "{{name}}"
     git tag --delete "{{name}}"
 
+checkout-tag part:
+    git checkout "hw{{hw}}p{{part}}handin"
+
 submit part: (tag "hw" + hw + "p" + part + "handin" "Completed hw" + hw + " part" + part + ".")
 
 unsubmit part: (untag "hw" + hw + "p" + part + "handin")

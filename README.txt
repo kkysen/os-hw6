@@ -1,34 +1,45 @@
+# hw6
+
+## Authors
+Khyber Sen, ks3343
+Aliza Rabinovitz, ajr2252
+Isabelle Arevalo, ia2422
+
+## Instructions
+
 This file should contain:
 
--	Your name & UNI (or those of all group members for group assignments)
--	Homework assignment number
--	Description for each part
+- Your name & UNI (or those of all group members for group assignments)
+- Homework assignment number
+- Description for each part
 
 The description should indicate whether your solution for the part is working
 or not. You may also want to include anything else you would like to
 communicate to the grader, such as extra functionality you implemented or how
 you tried to fix your non-working code.
 
-Names:
+## Part Descriptions
 
-Khyber Sen, ks3343
-Aliza Rabinovitz, ajr2252
-Isabelle Arevalo, ia2422
+### Part 1
+TODO
 
-HW: 6
+### Part 2
+TODO
 
-Part 1:
+### Part 3
+TODO
 
-Part 2:
+### Part 4
+TODO
 
-Part 3:
+### Part 5
+TODO
 
-Part 4:
+### Part 6
+TODO
 
-Part 5:
+### Part 7
+TODO
 
-Part 6:
-
-Part 7:
-
-Part 8:
+### Part 8
+TODO
