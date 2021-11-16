@@ -3,7 +3,11 @@
 cd $(dirname $0)
 
 if [[ ! -x jiffies ]]; then
-    include=/lib/modules/$(uname -r)/build/include
+    linux=/lib/modules/$(uname -r)/build
+    if [[ ! -d $linux ]]; then
+        linux=../../linux
+    fi
+    include=$linux/include
     echo '#include <stdio.h>' > jiffies.c
     rg '#define HZ' $include/uapi/asm-generic/param.h >> jiffies.c
     rg '#define INITIAL_JIFFIES' $include/linux/jiffies.h >> jiffies.c
