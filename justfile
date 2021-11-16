@@ -463,4 +463,32 @@ rename-branch old_name new_name:
     git push origin --delete "{{old_name}}"
     git checkout -
 
+ftrace_dir := "/sys/kernel/debug/tracing"
 
+_ftrace_get file:
+    cat "{{join(ftrace_dir, file)}}"
+
+_ftrace_set file value:
+    echo "{{value}}" > "{{join(ftrace_dir, file)}}"
+
+available-tracers: (_ftrace_get "available_tracers")
+
+get-tracer: (_ftrace_get "current_tracer")
+
+set-tracer name: (_ftrace_set "current_tracer" name)
+
+_set_tracing_on on: (_ftrace_set "tracing_on" on)
+
+start-trace: (_set_tracing_on "1")
+
+stop-trace: (_set_tracing_on "0")
+
+view-trace: (_ftrace_get "trace")
+
+trace tracer *args:
+    just stop-trace
+    just set-tracer "{{tracer}}"
+    just start-trace
+    {{args}}
+    just stop-trace
+    just view-trace
