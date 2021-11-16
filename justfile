@@ -1,6 +1,6 @@
 set shell := ["bash", "-c"]
 
-hw := "5"
+hw := "6"
 n_proc := `nproc`
 
 default:
@@ -77,7 +77,7 @@ make-kernel *args: (make-in "linux" args)
 
 modify-config:
     ./linux/scripts/config --file linux/.config \
-        --set-str LOCALVERSION "\"-$(just get-git-uni)-fridge\"" \
+        --set-str LOCALVERSION "\"-$(just get-git-uni)-muqss\"" \
         --enable BLK_DEV_LOOP \
         --set-val SYSTEM_TRUSTED_KEYS '' \
         --enable STACKTRACE \
@@ -93,13 +93,18 @@ modify-config:
         --disable UBSAN_SANITIZE_ALL \
         --disable UBSAN_ALIGNMENT \
         --disable TEST_UBSAN \
+        --enable FUNCTION_TRACER \
+        --enable FUNCTION_GRAPH_TRACER \
+        --enable STACK_TRACER \
+        --enable DYNAMIC_FTRACE \
         --disable RANDOMIZE_BASE
 
 generate-config: && modify-config
     yes '' | just make-kernel localmodconfig
 
-apply-fridge-patch:
-    git apply patch/fridge.patch
+apply-muqss-patch:
+    git checkout muqss
+    cd linux && patch -p1 < ../patch/0001-MultiQueue-Skiplist-Scheduler-v0.205.patch
 
 setup-kernel: (make-kernel "mrproper") generate-config make-kernel install-kernel
     @echo now reboot
@@ -270,12 +275,15 @@ benchmark branch:
     just unload-mod
     git checkout -
 
+current-branch:
+    git branch --show-current || git rev-parse --abbrev-ref HEAD
+
 default-branch:
     git remote show origin | rg 'HEAD branch: (.*)$' --only-matching --replace '$1'
 
 tag name message:
     git tag -a -m "{{message}}" "{{name}}"
-    git push origin "$(just default-branch)"
+    git push origin "$(just current-branch)"
     git push origin "{{name}}"
 
 untag name:
@@ -454,3 +462,5 @@ rename-branch old_name new_name:
     git push origin --set-upstream "{{new_name}}"
     git push origin --delete "{{old_name}}"
     git checkout -
+
+
