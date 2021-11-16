@@ -98,13 +98,15 @@ Briefly describe the advantages and disadvantages of a larger HZ.
 
 Advantages: A higher HZ/tick rate means that the timer interrupts
 are more frequent and work can occur more frequently.
-With higher Hz, error, which is 5 milliseconds/Hz is lower,
+With higher HZ, error, which is 5 milliseconds/HZ or lower,
 which means that there is more accuracy in timing, which is
 important for preemption and functions that use timeouts or rely on timing.
-There is also higher/finer resolution, which means there are better measurement recordings.
+There is also higher/finer resolution, which means
+there are better measurement recordings.
 
-Disadvantages: The higher HZ, the more time is spent doing the actual timer interrupts,
-which grows the overhead. This time eventually adds up and can lead to more of the cache memory
+Disadvantages: The higher HZ, the more time is spent doing
+the actual timer interrupts, which grows the overhead.
+This time eventually adds up and can lead to more of the cache memory
 being overused and more power being used.
 
 =================================== P5Q1 end ===================================
@@ -112,19 +114,24 @@ being overused and more power being used.
 ================================== P5Q2 start ==================================
 What is the HZ currently configured for your running Linux system?
 
-We created a simple kernel module that on module init prints out the “USER_HZ” variable,
-which is a kernel constant. The HZ currently configured for our running Linux system is 100.
+We created a simple kernel module that on module init prints out
+the `USER_HZ` variable, which is a kernel constant.
+The HZ currently configured for our running Linux system is 100.
+
+`getconf CLK_TCK` also says `HZ` is 100.
 
 =================================== P5Q2 end ===================================
 
 ================================== P5Q3 start ==================================
 What are jiffies? Explain the relationship between jiffies, HZ, and time.
 
-“Jiffies” is a variable that represents the number of ticks/timer interrupts since the system boot.
-The number is generally set to a specific value on boot (in order to better catch overflow)
+"Jiffies" is a variable that represents the number of ticks/timer interrupts
+since the system boot. The number is generally set to
+a specific (high) value on boot (in order to better catch overflows)
 and when calculated that initial number is subtracted from the new value.
-The number of HZ in a second is equal to the number of jiffies in a second.
-The relationship between jiffies and time is that seconds are equal to jiffies/HZ.
+The HZ is equal to jiffies per second,
+or rather, HZ jiffies happen every second.
+The relationship between jiffies and time is that seconds = jiffies/HZ.
 
 =================================== P5Q3 end ===================================
 
@@ -138,14 +145,16 @@ Find the current value of jiffies in your system.
       jiffies is a 32-bit value.)
 
 In Aliza’s system, jiffies is equal to 4296575070.
-Seconds = jiffies/Hz = 4296575070/100 = 42965750.70/60 = 716095.845 minutes.
+Seconds = jiffies/HZ = 4296575070/100 = 42965750.70/60 = 716095.845 minutes.
 The time reported by the uptime command is 6731.23.
 
-The formula to convert is *TO DO*.
+The formula to convert is *TODO*.
 
-This large difference exists because in 32-bit Linux systems, jiffies is a 32-bit
-val. However, time is 64-bits. This means that jiffies has more overflow and wraparound,
-while the time can continue for longer without overflow, skewing the values.
+This large difference exists because in 32-bit Linux systems, jiffies is a
+32-bit number. However, time is 64-bit on our 64-bit OS and hardware
+and the initial jiffies is still a high 32-bit number. This means that
+jiffies can increase much more before overflowing and wrapping around,
+i.e. the time can continue for longer without overflow, skewing the values.
 
 =================================== P5Q4 end ===================================
 
