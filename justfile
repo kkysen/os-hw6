@@ -463,37 +463,34 @@ rename-branch old_name new_name:
     git push origin --delete "{{old_name}}"
     git checkout -
 
-ftrace_dir := "/sys/kernel/debug/tracing"
+eval code:
+    eval "{{code}}"
 
-_ftrace_get file:
-    cat "{{join(ftrace_dir, file)}}"
+_read_or_write_file path value="": (eval if value == "" { "cat '" + path + "'" } else { "echo '" + value + "' > '" + path + "'" })
 
-_ftrace_set file value:
-    echo "{{value}}" > "{{join(ftrace_dir, file)}}"
+_debug_fs path value="": (_read_or_write_file join("/sys/kernel/debug", path) value)
 
-tracers-available: (_ftrace_get "available_tracers")
+_ftrace path value="": (_debug_fs join("tracing", path) value)
 
-tracer-get: (_ftrace_get "current_tracer")
+tracers-available: (_ftrace "available_tracers")
 
-tracer-set name: (_ftrace_set "current_tracer" name)
+tracer name="": (_ftrace "current_tracer" name)
 
-_trace_set_on on: (_ftrace_set "tracing_on" on)
+_trace_set_on on: (_ftrace "tracing_on" on)
 
 trace-start: (_trace_set_on "1")
 
 trace-stop: (_trace_set_on "0")
 
-trace-mark message: (_ftrace_set "trace_marker" message)
+trace-mark message: (_ftrace "trace_marker" message)
 
-trace-view: (_ftrace_get "trace")
+trace-buffer-size size_kb="": (_ftrace "buffer_size_kb" size_kb)
 
-trace tracer *args:
-    just trace-stop
-    just tracer-set "{{tracer}}"
-    just trace-start
+trace-view cpu="": (_ftrace join(if cpu == "" { "." } else { "per_cpu/cpu" + cpu }, "trace"))
+
+trace-with tracer_name cpu *args: trace-stop (tracer tracer_name) trace-start && trace-stop (tracer "nop") (trace-view cpu)
     just trace-mark "starting: {{args}}"
     {{args}}
     just trace-mark "finished: {{args}}"
-    just trace-stop
-    just tracer-set nop
-    just trace-view
+
+trace *args: (trace-with "function_graph" "" args)
