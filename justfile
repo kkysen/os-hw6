@@ -471,24 +471,29 @@ _ftrace_get file:
 _ftrace_set file value:
     echo "{{value}}" > "{{join(ftrace_dir, file)}}"
 
-available-tracers: (_ftrace_get "available_tracers")
+tracers-available: (_ftrace_get "available_tracers")
 
-get-tracer: (_ftrace_get "current_tracer")
+tracer-get: (_ftrace_get "current_tracer")
 
-set-tracer name: (_ftrace_set "current_tracer" name)
+tracer-set name: (_ftrace_set "current_tracer" name)
 
-_set_tracing_on on: (_ftrace_set "tracing_on" on)
+_trace_set_on on: (_ftrace_set "tracing_on" on)
 
-start-trace: (_set_tracing_on "1")
+trace-start: (_trace_set_on "1")
 
-stop-trace: (_set_tracing_on "0")
+trace-stop: (_trace_set_on "0")
 
-view-trace: (_ftrace_get "trace")
+trace-mark message: (_ftrace_set "trace_marker" message)
+
+trace-view: (_ftrace_get "trace")
 
 trace tracer *args:
-    just stop-trace
-    just set-tracer "{{tracer}}"
-    just start-trace
+    just trace-stop
+    just tracer-set "{{tracer}}"
+    just trace-start
+    just trace-mark "starting: {{args}}"
     {{args}}
-    just stop-trace
-    just view-trace
+    just trace-mark "finished: {{args}}"
+    just trace-stop
+    just tracer-set nop
+    just trace-view
