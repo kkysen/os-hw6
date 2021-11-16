@@ -180,9 +180,11 @@ Find the current value of jiffies in your system.
 
 In Aliza’s system, jiffies is equal to 4296575070.
 Seconds = jiffies/HZ = 4296575070/100 = 42965750.70/60 = 716095.845 minutes.
-The time reported by the uptime command is 6731.23.
+The time reported by the uptime command is 6731.23 seconds = 112.19 minutes.
 
-The formula to convert is *TODO*.
+The formula to convert in minutes is approximently that
+uptime in minutes = (jiffies - initial jiffies) / (2.5*60).
+On this computer, initial jiffies was 4294892296.
 
 This large difference exists because in 32-bit Linux systems, jiffies is a
 32-bit number. However, time is 64-bit on our 64-bit OS and hardware
