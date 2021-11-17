@@ -79,19 +79,24 @@ modify-config:
     #!/usr/bin/env bash
     set -euox pipefail
 
-    config="echo ./linux/scripts/config --file linux/.config"
+    config="./linux/scripts/config --file linux/.config"
     uni="$(just get-git-uni)"
     version="-${uni}"
-    branch="$(just current-branch)"    
+    branch="$(just current-branch)"
 
-    [[ "${branch}" == "muqss" ]] && version+="-muqss"
+    if [[ "${branch}" == "muqss" ]]; then
+        version+="-muqss"
+    fi
 
     $config \
         --enable BLK_DEV_LOOP \
-        --set-val SYSTEM_TRUSTED_KEYS ''
+        --set-val SYSTEM_TRUSTED_KEYS '' \
         --set-str LOCALVERSION "${version}"
-    
-    [[ "${branch}" == "muqss" ]] && $config \
+
+    if [[ "${branch}" == "muqss" ]]; then
+        exit
+    fi
+    $config \
         --enable STACKTRACE \
         --enable KASAN \
         --enable KASAN_GENERIC \
