@@ -218,14 +218,13 @@ the real-time priority task was able to achieve close to 100% CPU like in P1Q2.
 Verify Con Kolivas' claim by timing the kernel build-time in both your fallback
 and your MuQSS-patched kernels.
 
-Results:
-Fallback kernel: 134.00 user,    34.20 system,   0 status
-MuQSS-patch kernel: 164.19 user,    25.39 system,   0 status
+  CFS: 134.00 user, 34.20 system
+MuQSS: 164.19 user, 25.39 system
 
-Our findings indicate that they have similar build times,
-although the fallback kernel appears to win against the MuQSS-patch in
-user space time, for time in kernel space the patch beats the original
-fallback kernel, which supports Con Kolivas' claim.
+This indicates they have similar build times,
+although CFS appears to win against MuQSS in user time,
+while MuQSS beats CFS in kernel time.
+Running on a VM likely added significant noise.
 
 =================================== P4Q1 end ===================================
 
@@ -233,20 +232,19 @@ fallback kernel, which supports Con Kolivas' claim.
 Design an experiment that you think will highlight MuQSS’s strength. Perform 
 the experiment and report your findings.
 
-Our experiment was to play a playlist of Youtube videos at high-quality
+We played a playlist of high-resolution YouTube videos
 on the VM while the kernel built.
-Our command was
+To time, we ran:
 ```shell
 sudo /usr/bin/time -f "\t%U user,\t%S system,\t%x status" make -j2
 ```
 
-Time for the fallback kernel: 145.64 user,    41.50 system,   0 status
-Time for the MuQSS-patched kernel: 139.86 user,    25.29 system,   0 status
+  CFS: 145.64 user, 41.50 system
+MuQSS: 139.86 user, 25.29 system
 
-The experiment validated Con Kolivas' claim, more than P4Q1.
-The MuQss version was lower (although similar) in user mode
-and time in kernel mode was cut down by almost half (41.50 to 25.29)
-in the MuQSS version.
+This validated Con Kolivas' claim more than P4Q1.
+The MuQss version was lower (although similar) for user time
+and almost twice as fast for kernel time (41.50 to 25.29).
 
 =================================== P4Q2 end ===================================
 
