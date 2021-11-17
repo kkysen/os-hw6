@@ -154,18 +154,14 @@ the experiment and report your findings.
 ================================== P5Q1 start ==================================
 Briefly describe the advantages and disadvantages of a larger HZ.
 
-Advantages: A higher HZ/tick rate means that the timer interrupts
-are more frequent and work can occur more frequently.
-With higher HZ, error, which is 5 milliseconds/HZ or lower,
-which means that there is more accuracy in timing, which is
-important for preemption and functions that use timeouts or rely on timing.
-There is also higher/finer resolution, which means
-there are better measurement recordings.
+    Advantages
+A larger HZ means timer interrupts are more frequent,
+so work is more fine-grained and accuracy and resolution for timers
+and their events is greater (though worse than high resolution timers).
 
-Disadvantages: The higher HZ, the more time is spent doing
-the actual timer interrupts, which grows the overhead.
-This time eventually adds up and can lead to more of the cache memory
-being overused and more power being used.
+    Disadvantages
+More time is spent doing actual timer interrupts,
+which may also thrash the caches.
 
 =================================== P5Q1 end ===================================
 
