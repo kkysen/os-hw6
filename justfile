@@ -86,6 +86,8 @@ modify-config:
 
     if [[ "${branch}" == "muqss" ]]; then
         version+="-muqss"
+    else
+        version+="-freezer"
     fi
 
     $config \
