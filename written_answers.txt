@@ -143,7 +143,7 @@ Indicate you successfully patched, built, and booted into your MuQSS-enabled
 Linux kernel.
 
 Successfully patched, built, and booted into the MuQSS-enabled Linux kernel.
-The following is the output to sudo dmesg | grep "MuQSS"
+The following is the output of `sudo dmesg | grep "MuQSS"`:
 
 [    0.159554] MuQSS possible/present/online CPUs: 128/2/2
 [    0.159555] MuQSS locality CPU 0 to 0: 0
@@ -217,16 +217,14 @@ the real-time priority task was able to achieve close to 100% CPU like in P1Q2.
 ================================== P4Q1 start ==================================
 Verify Con Kolivas' claim by timing the kernel build-time in both your fallback
 and your MuQSS-patched kernels.
-    
-Our results after kernel build-time:
-Fallback kernel: 134.00 user,    34.20 system,   0 status
-MuQSS-patch kernel: 164.19 user,    25.39 system,   0 status
 
-Our findings indicate that they have somewhat similar build times in this case,
-although the fallback kernel appears to win against the MuQSS-patch in
-user space time, in terms of time in kernel space the patch beats the original
-fallback kernel/CFS scheduling technique, which leads us to support
-Con Kolivas' claim.
+  CFS: 134.00 user, 34.20 system
+MuQSS: 164.19 user, 25.39 system
+
+This indicates they have similar build times,
+although CFS appears to win against MuQSS in user time,
+while MuQSS beats CFS in kernel time.
+Running on a VM likely added significant noise.
 
 =================================== P4Q1 end ===================================
 
@@ -234,25 +232,19 @@ Con Kolivas' claim.
 Design an experiment that you think will highlight MuQSS’s strength. Perform 
 the experiment and report your findings.
 
-Our experiment was to continuously play Youtube videos at high-quality
---specifically, we played a playlist of talk show and music videos on Youtube--
-in the background on the VM while the kernel was building.
-We ran time using the `make -j2` command to test these.
-Our command was
+We played a playlist of high-resolution YouTube videos
+on the VM while the kernel built.
+To time, we ran:
 ```shell
 sudo /usr/bin/time -f "\t%U user,\t%S system,\t%x status" make -j2
 ```
-while these videos were running in the background on the VM (using the VM GUI).
 
-Time for the fallback kernel: 145.64 user,    41.50 system,   0 status
-Time for the MuQSS-patched kernel: 139.86 user,    25.29 system,   0 status
+  CFS: 145.64 user, 41.50 system
+MuQSS: 139.86 user, 25.29 system
 
-From the results we can see that the experiment validated Con Kolivas' claim
-that the kernel compile time was faster, more so than the in P4Q1.
-Although the results were similar for the program in user mode
-(although the MuQss version was still lower),
-we can see that the time in kernel mode was improved with the MuQSS version,
-cutting down by almost half (41.50 to 25.29).
+This validated Con Kolivas' claim more than P4Q1.
+The MuQss version was lower (although similar) for user time
+and almost twice as fast for kernel time (41.50 to 25.29).
 
 =================================== P4Q2 end ===================================
 
@@ -275,17 +267,16 @@ which may also thrash the caches.
 ================================== P5Q2 start ==================================
 What is the HZ currently configured for your running Linux system?
 
-Both the kernel HZ constant and the USER_HZ value are 100.
-The kernel HZ is define as `#define HZ 100` on our system in
-`linux/include/uapi/asm-generic/param.h`,
-and USER_HZ = `getconf CLK_TCK`.
+(kernel) HZ = 250 = `grep 'CONFIG_HZ=' /boot/config-$(uname -r)`.
+USER_HZ = 100 = `getconf CLK_TCK`
 
 =================================== P5Q2 end ===================================
 
 ================================== P5Q3 start ==================================
+What are jiffies? Explain the relationship between jiffies, HZ, and time.
+
 Jiffies is the number of ticks/timer interrupts since boot-time.
 HZ is the number of interrupts/second, so HZ jiffies happen every second.
-Jiffies is set to a specific (high) value on boot to better catch overflows.
 
 time (in seconds) = jiffies/HZ
 
@@ -300,20 +291,21 @@ Find the current value of jiffies in your system.
     - Why does this large difference exist? (Hint: in 32-bit Linux systems,
       jiffies is a 32-bit value.)
 
-In Aliza’s system, jiffies is equal to 4296575070.
-Seconds = jiffies/HZ = 4296575070/100 = 42965750.70/60 = 716095.845 minutes.
-The time reported by the uptime command is 6731.23 seconds = 112.19 minutes.
+We got:
+    initial_jiffies = 4294892296
+        (from `#define INITIAL_JIFFIES` in `include/linux/jiffies.h`)
+    jiffies = 4295219340 (from `/proc/timer_list`)
+    jiffy_time = (jiffies - initial_jiffies) / HZ / 60 minutes
+               = (4295219340 - 4294892296) / 250 / 60 minutes
+               = 21.80 minutes
+    uptime = 22.12 minutes
+Without subtracting the initial jiffies, we get:
+    jiffy time = jiffies / HZ / 60 = 4295219340 / 250 / 60 = 286347.96 minutes
 
-The formula to convert in minutes is approximently that
-uptime in minutes = (jiffies - initial jiffies) / (2.5*60).
-This formula is for when jiffies is reported in seconds.
-On this computer, initial jiffies was 4294892296.
-
-This large difference exists because in 32-bit Linux systems, jiffies is a
-32-bit number. However, time is 64-bit on our 64-bit OS and hardware
-and the initial jiffies is still a high 32-bit number. This means that
-jiffies can increase much more before overflowing and wrapping around,
-i.e. the time can continue for longer without overflow, skewing the values.
+The large difference exists because jiffies starts as a high 32-bit integer
+to detect wrapping overflow, but on a 64-bit CPU this doesn't happen
+for a long time.  Once the initial jiffies are subtracted,
+the jiffies are very close to the uptime.
 
 =================================== P5Q4 end ===================================
 
