@@ -504,3 +504,6 @@ trace *args: (trace-with "function_graph" "" args)
 
 jiffies:
     ./user/test/jiffies.sh
+
+split-procs:
+    ./user/test/split-procs.sh
