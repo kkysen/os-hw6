@@ -21,7 +21,7 @@ you tried to fix your non-working code.
 ## Part Descriptions
 
 ### Part 1
-TODO
+Part 1 is completed with the answers filled out.
 
 ### Part 2
 Part 2 is completed with explanations that our kernel is working.

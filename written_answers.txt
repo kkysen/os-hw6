@@ -13,19 +13,15 @@ Describe how you created the 70%/30% split.
 
 We ran the command
 ```shell
-for i in {1..10}; do ( [[ $i -le 5 ]] && nice=-7 || nice=-3; taskset 1 nice $nice yes > /dev/null & ); done
+for i in {1..10}; do
+    [[ $i -le 5 ]] && nice=-7 || nice=-3
+    taskset 1 nice $nice yes > /dev/null &
+done
 ```
 to create the 70%/30% split.
-10 processes were created, `yes > /dev/null` that stress the CPU,
-then all were assigned to the 1st CPU using `taskset 1`,
-and half were assigned `nice -7` and the other half `nice -3`,
-which created the 70%/30% split.
-Then we used `htop` to verify the split.
 
 Root privileges were not necessary for any of these commands.
 
-Here's the `htop` output, truncated to show
-only the `yes` commands and nothing below:
 ```htop
   1  [|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||100.0%]   5  [                                                                               0.0%]
   2  [                                                                               0.0%]   6  [                                                                               0.0%]
@@ -57,19 +53,11 @@ Describe how you created a real-time priority task.
     - Include the top output
 
 After running the command previously used to create the 70%/30% split,
-```shell
-for i in {1..10}; do ( [[ $i -le 5 ]] && nice=-7 || nice=-3; taskset 1 nice $nice yes > /dev/null & ); done
-```
-we ran
-```shell
-taskset 1 sudo chrt --rr 99 yes > /dev/null
-```
+we ran `taskset 1 sudo chrt --rr 99 yes > /dev/null`.
 
 `chrt` here, specifically the `sched_setscheduler` syscall,
 needed root privileges to run.
 
-Here's the `htop` output, truncated to show only the `yes` commands,
-the one `htop` command, and nothing below:
 ```htop
   1  [|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||100.0%]   5  [                                                                               0.0%]
   2  [                                                                               0.0%]   6  [|                                                                              0.7%]
