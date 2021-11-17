@@ -89,7 +89,52 @@ needed root privileges to run.
 The output of diff or diffconfig when comparing the config files for your 
 mainline fallback kernel and your MuQSS kernel
 
-    /* TODO */
+-ANDROID_BINDERFS n
+-ANDROID_BINDER_DEVICES "binder"
+-ANDROID_BINDER_IPC_SELFTEST n
+-BPF_UNPRIV_DEFAULT_OFF y
+-CFS_BANDWIDTH y
+-CGROUP_CPUACCT y
+-FAIR_GROUP_SCHED y
+-INTEL_IOMMU_DEFAULT_OFF n
+-INTEL_IOMMU_DEFAULT_ON_INTGPU_OFF y
+-LOCK_DOWN_IN_EFI_SECURE_BOOT y
+-MTD_PSTORE n
+-NUMA_BALANCING y
+-NUMA_BALANCING_DEFAULT_ENABLED y
+-PSTORE_BLK m
+-PSTORE_BLK_BLKDEV ""
+-PSTORE_BLK_KMSG_SIZE 64
+-PSTORE_BLK_MAX_REASON 2
+-PSTORE_ZONE m
+-RESET_BRCMSTB_RESCAL n
+-RT_GROUP_SCHED n
+-SCHED_AUTOGROUP y
+-SECURITY_PERF_EVENTS_RESTRICT y
+-X86_X32_DISABLED y
+-XILINX_ZYNQMP_DPDMA n
+ ANDROID_BINDER_IPC m -> n
+ ASHMEM m -> n
+ BLK_DEV_LOOP m -> y
+ CC_VERSION_TEXT "gcc-10 (Debian 10.2.1-6) 10.2.1 20210110" -> "gcc (Debian 10.2.1-6) 10.2.1 20210110"
+ LOCALVERSION "" -> "-ajr2252-muqss"
+ SYSTEM_TRUSTED_KEYS "debian/certs/debian-uefi-certs.pem" -> ""
+ USB_COMMON m -> y
++BATTERY_RT5033 n
++FB_NVIDIA n
++FB_RIVA n
++NTFS_FS n
++RQ_ALL n
++RQ_MC y
++RQ_MC_LLC n
++RQ_NONE n
++RQ_SMP n
++RQ_SMT n
++SCHED_MUQSS y
++SHARERQ 2
++SMT_NICE y
++SYSTEM_REVOCATION_LIST n
++VIDEO_VS6624 n
 
 =================================== P2Q1 end ===================================
 
@@ -97,7 +142,24 @@ mainline fallback kernel and your MuQSS kernel
 Indicate you successfully patched, built, and booted into your MuQSS-enabled 
 Linux kernel.
 
-    /* TODO */ 
+Successfully patched, built, and booted into the MuQSS-enabled Linux kernel.
+The following is the output to sudo dmesg | grep "MuQSS"
+
+[    0.159554] MuQSS possible/present/online CPUs: 128/2/2
+[    0.159555] MuQSS locality CPU 0 to 0: 0
+[    0.159555] MuQSS locality CPU 0 to 1: 4
+[    0.159555] MuQSS locality CPU 1 to 0: 4
+[    0.159556] MuQSS locality CPU 1 to 1: 0
+[    0.159564] MuQSS CPU 0 llc 0 RQ order 0 RQ 0 llc 0
+[    0.159564] MuQSS CPU 0 llc 0 RQ order 1 RQ 1 llc 2
+[    0.159565] MuQSS CPU 1 llc 2 RQ order 0 RQ 1 llc 2
+[    0.159565] MuQSS CPU 1 llc 2 RQ order 1 RQ 0 llc 0
+[    0.159566] MuQSS CPU 0 llc 0 CPU order 0 RQ 0 llc 0
+[    0.159566] MuQSS CPU 0 llc 0 CPU order 1 RQ 1 llc 2
+[    0.159567] MuQSS CPU 1 llc 2 CPU order 0 RQ 1 llc 2
+[    0.159567] MuQSS CPU 1 llc 2 CPU order 1 RQ 0 llc 0
+[    0.159567] MuQSS runqueue share type MC total runqueues: 2
+[    9.019688] MuQSS CPU scheduler v0.205 by Con Kolivas.
 
 =================================== P2Q2 end ===================================
 
@@ -156,7 +218,15 @@ the real-time priority task was able to achieve close to 100% CPU like in P1Q2.
 Verify Con Kolivas' claim by timing the kernel build-time in both your fallback
 and your MuQSS-patched kernels.
     
-    /* TODO */ 
+Our results after kernel build-time:
+Fallback kernel: 134.00 user,    34.20 system,   0 status
+MuQSS-patch kernel: 164.19 user,    25.39 system,   0 status
+
+Our findings indicate that they have somewhat similar build times in this case,
+although the fallback kernel appears to win against the MuQSS-patch in
+user space time, in terms of time in kernel space the patch beats the original
+fallback kernel/CFS scheduling technique, which leads us to support
+Con Kolivas' claim.
 
 =================================== P4Q1 end ===================================
 
@@ -164,7 +234,25 @@ and your MuQSS-patched kernels.
 Design an experiment that you think will highlight MuQSS’s strength. Perform 
 the experiment and report your findings.
 
-    /* TODO */ 
+Our experiment was to continuously play Youtube videos at high-quality
+--specifically, we played a playlist of talk show and music videos on Youtube--
+in the background on the VM while the kernel was building.
+We ran time using the `make -j2` command to test these.
+Our command was
+```shell
+sudo /usr/bin/time -f "\t%U user,\t%S system,\t%x status" make -j2
+```
+while these videos were running in the background on the VM (using the VM GUI).
+
+Time for the fallback kernel: 145.64 user,    41.50 system,   0 status
+Time for the MuQSS-patched kernel: 139.86 user,    25.29 system,   0 status
+
+From the results we can see that the experiment validated Con Kolivas' claim
+that the kernel compile time was faster, more so than the in P4Q1.
+Although the results were similar for the program in user mode
+(although the MuQss version was still lower),
+we can see that the time in kernel mode was improved with the MuQSS version,
+cutting down by almost half (41.50 to 25.29).
 
 =================================== P4Q2 end ===================================
 
