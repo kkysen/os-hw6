@@ -19,7 +19,7 @@ HW: 6
 
 Part 1:
 
-Part 2:
+Part 2: Part 2 is completed with explanations that our kernel is working.
 
 Part 3:
 
