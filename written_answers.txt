@@ -24,7 +24,8 @@ Then we used `htop` to verify the split.
 
 Root privileges were not necessary for any of these commands.
 
-Here's the `htop` output, truncated to show only the `yes` commands and nothing below.
+Here's the `htop` output, truncated to show
+only the `yes` commands and nothing below:
 ```htop
   1  [|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||100.0%]   5  [                                                                               0.0%]
   2  [                                                                               0.0%]   6  [                                                                               0.0%]
@@ -55,7 +56,42 @@ Describe how you created a real-time priority task.
     - Indicate if you needed root privileges for any of those commands
     - Include the top output
 
-    /* TODO */ 
+After running the command previously used to create the 70%/30% split,
+```shell
+for i in {1..10}; do ( [[ $i -le 5 ]] && nice=-7 || nice=-3; taskset 1 nice $nice yes > /dev/null & ); done
+```
+we ran
+```shell
+taskset 1 sudo chrt --rr 99 yes > /dev/null
+```
+
+`chrt` here, specifically the `sched_setscheduler` syscall,
+needed root privileges to run.
+
+Here's the `htop` output, truncated to show only the `yes` commands,
+the one `htop` command, and nothing below:
+```htop
+  1  [|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||100.0%]   5  [                                                                               0.0%]
+  2  [                                                                               0.0%]   6  [|                                                                              0.7%]
+  3  [                                                                               0.0%]   7  [|                                                                              0.7%]
+  4  [                                                                               0.0%]   8  [                                                                               0.0%]
+  Mem[|||||                                                                    127M/12.3G]   Tasks: 36, 2 thr; 8 running
+  Swp[                                                                           0K/4.00G]   Load average: 4.92 3.09 2.08
+                                                                                             Uptime: 00:30:58
+
+  PID USER      PRI  NI  VIRT   RES   SHR S CPU% MEM%   TIME+  Command
+ 3149 root       RT   0  7232   524   456 R 97.4  0.0  0:19.58 yes
+ 3106 kkysen     23   3  7236   588   520 R  0.7  0.0  0:02.36 yes
+ 3103 kkysen     23   3  7236   588   516 R  0.7  0.0  0:02.35 yes
+ 3105 kkysen     23   3  7236   528   456 R  0.7  0.0  0:02.35 yes
+ 3098 kkysen     27   7  7236   592   520 R  0.7  0.0  0:00.96 yes
+ 3170 kkysen     20   0  8564  4072  3044 R  0.7  0.0  0:00.03 htop
+ 3104 kkysen     23   3  7236   524   456 R  0.0  0.0  0:02.35 yes
+ 3102 kkysen     23   3  7236   588   516 R  0.0  0.0  0:02.35 yes
+ 3101 kkysen     27   7  7236   524   456 R  0.0  0.0  0:00.96 yes
+ 3100 kkysen     27   7  7236   524   456 R  0.0  0.0  0:00.96 yes
+ 3097 kkysen     27   7  7236   592   520 R  0.0  0.0  0:00.95 yes
+```
 
 =================================== P1Q2 end ===================================
 
