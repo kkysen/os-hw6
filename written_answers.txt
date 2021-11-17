@@ -172,24 +172,19 @@ being overused and more power being used.
 ================================== P5Q2 start ==================================
 What is the HZ currently configured for your running Linux system?
 
-We created a simple kernel module that on module init prints out
-the `USER_HZ` variable, which is a kernel constant.
-The HZ currently configured for our running Linux system is 100.
-
-`getconf CLK_TCK` also says `HZ` is 100.
+Both the kernel HZ constant and the USER_HZ value are 100.
+The kernel HZ is define as `#define HZ 100` on our system in
+`linux/include/uapi/asm-generic/param.h`,
+and USER_HZ = `getconf CLK_TCK`.
 
 =================================== P5Q2 end ===================================
 
 ================================== P5Q3 start ==================================
-What are jiffies? Explain the relationship between jiffies, HZ, and time.
+Jiffies is the number of ticks/timer interrupts since boot-time.
+HZ is the number of interrupts/second, so HZ jiffies happen every second.
+Jiffies is set to a specific (high) value on boot to better catch overflows.
 
-"Jiffies" is a variable that represents the number of ticks/timer interrupts
-since the system boot. The number is generally set to
-a specific (high) value on boot (in order to better catch overflows)
-and when calculated that initial number is subtracted from the new value.
-The HZ is equal to jiffies per second,
-or rather, HZ jiffies happen every second.
-The relationship between jiffies and time is that seconds = jiffies/HZ.
+time (in seconds) = jiffies/HZ
 
 =================================== P5Q3 end ===================================
 
@@ -222,10 +217,9 @@ i.e. the time can continue for longer without overflow, skewing the values.
 ================================== P5Q5 start ==================================
 What are Niffies? How do they differ from Jiffies?
 
-Niffies are similar to jiffies except that they are calculated in nanoseconds
-rather than seconds. In addition, niffies are calculated slightly differently
-than jiffies because instead of being overall for the whole system that work off
-the TSC timers for each runqueue, and are periodically synchronized if they cannot be
-(when both runqueues are locked).
+Niffies are similar to jiffies except they’re calculated in nanoseconds
+rather than seconds, and thus must be calculated from high resolution
+TSC timers for each runqueue. Since they’re per-runqueue, they are
+periodically synchronized between CPUs when runqueues are concurrently locked.
 
 =================================== P5Q5 end ===================================
