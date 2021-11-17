@@ -148,7 +148,7 @@ static void update_curr_freezer(struct rq *rq)
 
 #ifdef CONFIG_FAIR_GROUP_SCHED
 
-static void *task_change_group_freezer(struct task_struct *p, int type)
+static void task_change_group_freezer(struct task_struct *p, int type)
 {
 	todo();
 }

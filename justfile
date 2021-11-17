@@ -75,6 +75,8 @@ make-non-kernel *args: (make-user args)
 
 make-kernel *args: (make-in "linux" args)
 
+make-freezer *args: (make-kernel "kernel/sched/freezer.o")
+
 modify-config:
     #!/usr/bin/env bash
     set -euox pipefail
