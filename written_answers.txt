@@ -171,7 +171,18 @@ Describe how you created the 70%/30% split.
     - Indicate if you needed root privileges for any of those commands
     - How were the results different from P1Q1, if at all.
 
-    /* TODO */
+We ran the same command as in P1Q1 to create the 70%/30% split:
+```shell
+for i in {1..10}; do
+    [[ $i -le 5 ]] && nice=-7 || nice=-3
+    taskset 1 nice $nice yes > /dev/null &
+done
+```
+
+Like with CFS, no root privileges were needed.
+
+Compared to P1Q1, the split wasn't exactly 70%/30%, it was more like 60%/40%,
+even though the same -7 and -3 nice values were used.
 
 =================================== P3Q1 end ===================================
 
@@ -181,7 +192,14 @@ Describe how you created a real-time priority task.
     - Indicate if you needed root privileges for any of those commands
     - How were the results different from P1Q2, if at all.
 
-    /* TODO */ 
+After running the command previously used to create the 70%/30% split,
+we ran `taskset 1 chrt --rr 99 yes > /dev/null`.
+
+Unlike with CFS, no root privileges were stricly needed to run `chrt` this time.
+
+Compared to P1Q2, the real-time priority task does not achieve
+anywhere near 100% CPU.  In P1Q2, it got close at high 90s%,
+but here it fluctuates between 50% and 80%.
 
 =================================== P3Q2 end ===================================
 
@@ -189,7 +207,8 @@ Describe how you created a real-time priority task.
 MuQSS features unprivileged real-time tasks. Perform the previous task with and
 without root privileges, and describe the differences. 
 
-    /* TODO */
+When running the previous command with `sudo chrt` instead of `chrt`,
+the real-time priority task was able to achieve close to 100% CPU like in P1Q2.
 
 =================================== P3Q3 end ===================================
 
