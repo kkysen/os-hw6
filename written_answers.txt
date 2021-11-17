@@ -11,7 +11,38 @@ Describe how you created the 70%/30% split.
     - Indicate if you needed root privileges for any of those commands
     - Include the top output
 
-    /* TODO */ 
+We ran the command
+```shell
+for i in {1..10}; do
+    [[ $i -le 5 ]] && nice=-7 || nice=-3
+    taskset 1 nice $nice yes > /dev/null &
+done
+```
+to create the 70%/30% split.
+
+Root privileges were not necessary for any of these commands.
+
+```htop
+  1  [|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||100.0%]   5  [                                                                               0.0%]
+  2  [                                                                               0.0%]   6  [                                                                               0.0%]
+  3  [                                                                               0.0%]   7  [                                                                               0.0%]
+  4  [                                                                               0.0%]   8  [|                                                                              0.7%]
+  Mem[|||||||||                                                                618M/12.3G]   Tasks: 36, 53 thr; 8 running
+  Swp[                                                                           0K/4.00G]   Load average: 9.99 7.53 4.06
+                                                                                             Uptime: 22:13:01
+
+  PID USER      PRI  NI  VIRT   RES   SHR S CPU% MEM%   TIME+  Command
+ 2330 kkysen     23   3  7236   588   520 R 14.6  0.0  0:57.21 yes
+ 2328 kkysen     23   3  7236   588   520 R 14.0  0.0  0:57.21 yes
+ 2332 kkysen     23   3  7236   524   456 R 14.0  0.0  0:57.21 yes
+ 2326 kkysen     23   3  7236   596   524 R 14.0  0.0  0:57.21 yes
+ 2324 kkysen     23   3  7236   596   524 R 14.0  0.0  0:57.21 yes
+ 2316 kkysen     27   7  7236   592   520 R  6.0  0.0  0:23.38 yes
+ 2320 kkysen     27   7  7236   592   520 R  6.0  0.0  0:23.38 yes
+ 2318 kkysen     27   7  7236   592   520 R  6.0  0.0  0:23.38 yes
+ 2314 kkysen     27   7  7236   524   456 R  6.0  0.0  0:23.38 yes
+ 2322 kkysen     27   7  7236   588   520 R  5.3  0.0  0:23.38 yes
+```
 
 =================================== P1Q1 end ===================================
 
@@ -21,7 +52,34 @@ Describe how you created a real-time priority task.
     - Indicate if you needed root privileges for any of those commands
     - Include the top output
 
-    /* TODO */ 
+After running the command previously used to create the 70%/30% split,
+we ran `taskset 1 sudo chrt --rr 99 yes > /dev/null`.
+
+`chrt` here, specifically the `sched_setscheduler` syscall,
+needed root privileges to run.
+
+```htop
+  1  [|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||100.0%]   5  [                                                                               0.0%]
+  2  [                                                                               0.0%]   6  [|                                                                              0.7%]
+  3  [                                                                               0.0%]   7  [|                                                                              0.7%]
+  4  [                                                                               0.0%]   8  [                                                                               0.0%]
+  Mem[|||||                                                                    127M/12.3G]   Tasks: 36, 2 thr; 8 running
+  Swp[                                                                           0K/4.00G]   Load average: 4.92 3.09 2.08
+                                                                                             Uptime: 00:30:58
+
+  PID USER      PRI  NI  VIRT   RES   SHR S CPU% MEM%   TIME+  Command
+ 3149 root       RT   0  7232   524   456 R 97.4  0.0  0:19.58 yes
+ 3106 kkysen     23   3  7236   588   520 R  0.7  0.0  0:02.36 yes
+ 3103 kkysen     23   3  7236   588   516 R  0.7  0.0  0:02.35 yes
+ 3105 kkysen     23   3  7236   528   456 R  0.7  0.0  0:02.35 yes
+ 3098 kkysen     27   7  7236   592   520 R  0.7  0.0  0:00.96 yes
+ 3170 kkysen     20   0  8564  4072  3044 R  0.7  0.0  0:00.03 htop
+ 3104 kkysen     23   3  7236   524   456 R  0.0  0.0  0:02.35 yes
+ 3102 kkysen     23   3  7236   588   516 R  0.0  0.0  0:02.35 yes
+ 3101 kkysen     27   7  7236   524   456 R  0.0  0.0  0:00.96 yes
+ 3100 kkysen     27   7  7236   524   456 R  0.0  0.0  0:00.96 yes
+ 3097 kkysen     27   7  7236   592   520 R  0.0  0.0  0:00.95 yes
+```
 
 =================================== P1Q2 end ===================================
 
@@ -178,21 +236,33 @@ with the MuQSS version, cutting down by almost half (41.50 to 25.29).
 ================================== P5Q1 start ==================================
 Briefly describe the advantages and disadvantages of a larger HZ.
 
-    /* TODO */ 
+    Advantages
+A larger HZ means timer interrupts are more frequent,
+so work is more fine-grained and accuracy and resolution for timers
+and their events is greater (though worse than high resolution timers).
+
+    Disadvantages
+More time is spent doing actual timer interrupts,
+which may also thrash the caches.
 
 =================================== P5Q1 end ===================================
 
 ================================== P5Q2 start ==================================
 What is the HZ currently configured for your running Linux system?
 
-    /* TODO */ 
+Both the kernel HZ constant and the USER_HZ value are 100.
+The kernel HZ is define as `#define HZ 100` on our system in
+`linux/include/uapi/asm-generic/param.h`,
+and USER_HZ = `getconf CLK_TCK`.
 
 =================================== P5Q2 end ===================================
 
 ================================== P5Q3 start ==================================
-What are jiffies? Explain the relationship between jiffies, HZ, and time.
+Jiffies is the number of ticks/timer interrupts since boot-time.
+HZ is the number of interrupts/second, so HZ jiffies happen every second.
+Jiffies is set to a specific (high) value on boot to better catch overflows.
 
-    /* TODO */ 
+time (in seconds) = jiffies/HZ
 
 =================================== P5Q3 end ===================================
 
@@ -205,13 +275,29 @@ Find the current value of jiffies in your system.
     - Why does this large difference exist? (Hint: in 32-bit Linux systems,
       jiffies is a 32-bit value.)
 
-    /* TODO */ 
+In Aliza’s system, jiffies is equal to 4296575070.
+Seconds = jiffies/HZ = 4296575070/100 = 42965750.70/60 = 716095.845 minutes.
+The time reported by the uptime command is 6731.23 seconds = 112.19 minutes.
+
+The formula to convert in minutes is approximently that
+uptime in minutes = (jiffies - initial jiffies) / (2.5*60).
+This formula is for when jiffies is reported in seconds.
+On this computer, initial jiffies was 4294892296.
+
+This large difference exists because in 32-bit Linux systems, jiffies is a
+32-bit number. However, time is 64-bit on our 64-bit OS and hardware
+and the initial jiffies is still a high 32-bit number. This means that
+jiffies can increase much more before overflowing and wrapping around,
+i.e. the time can continue for longer without overflow, skewing the values.
 
 =================================== P5Q4 end ===================================
 
 ================================== P5Q5 start ==================================
 What are Niffies? How do they differ from Jiffies?
 
-    /* TODO */ 
+Niffies are similar to jiffies except they’re calculated in nanoseconds
+rather than seconds, and thus must be calculated from high resolution
+TSC timers for each runqueue. Since they’re per-runqueue, they are
+periodically synchronized between CPUs when runqueues are concurrently locked.
 
 =================================== P5Q5 end ===================================
