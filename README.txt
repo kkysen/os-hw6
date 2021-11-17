@@ -33,7 +33,7 @@ TODO
 Part 4 is completed with the results of our experiment and the original kernel builds.
 
 ### Part 5
-TODO
+Answered the questions about jiffies and HZ.
 
 ### Part 6
 TODO
