@@ -23,7 +23,7 @@ Part 2: Part 2 is completed with explanations that our kernel is working.
 
 Part 3:
 
-Part 4:
+Part 4: Part 4 is completed with the results of our experiment and the original kernel builds.
 
 Part 5:
 
