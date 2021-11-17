@@ -24,13 +24,13 @@ you tried to fix your non-working code.
 TODO
 
 ### Part 2
-TODO
+Part 2 is completed with explanations that our kernel is working.
 
 ### Part 3
 TODO
 
 ### Part 4
-TODO
+Part 4 is completed with the results of our experiment and the original kernel builds.
 
 ### Part 5
 TODO
