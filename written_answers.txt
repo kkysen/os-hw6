@@ -184,6 +184,7 @@ The time reported by the uptime command is 6731.23 seconds = 112.19 minutes.
 
 The formula to convert in minutes is approximently that
 uptime in minutes = (jiffies - initial jiffies) / (2.5*60).
+This formula is for when jiffies is reported in seconds.
 On this computer, initial jiffies was 4294892296.
 
 This large difference exists because in 32-bit Linux systems, jiffies is a
