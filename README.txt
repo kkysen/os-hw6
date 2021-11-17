@@ -27,7 +27,7 @@ Part 1 is completed with the answers filled out.
 Part 2 is completed with explanations that our kernel is working.
 
 ### Part 3
-TODO
+Part 3 is completed with the answers filled out.
 
 ### Part 4
 Part 4 is completed with the results of our experiment and the original kernel builds.
