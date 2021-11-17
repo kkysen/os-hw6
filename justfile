@@ -76,10 +76,22 @@ make-non-kernel *args: (make-user args)
 make-kernel *args: (make-in "linux" args)
 
 modify-config:
-    ./linux/scripts/config --file linux/.config \
-        --set-str LOCALVERSION "\"-$(just get-git-uni)-muqss\"" \
+    #!/usr/bin/env bash
+    set -euox pipefail
+
+    config="echo ./linux/scripts/config --file linux/.config"
+    uni="$(just get-git-uni)"
+    version="-${uni}"
+    branch="$(just current-branch)"    
+
+    [[ "${branch}" == "muqss" ]] && version+="-muqss"
+
+    $config \
         --enable BLK_DEV_LOOP \
-        --set-val SYSTEM_TRUSTED_KEYS '' \
+        --set-val SYSTEM_TRUSTED_KEYS ''
+        --set-str LOCALVERSION "${version}"
+    
+    [[ "${branch}" == "muqss" ]] && $config \
         --enable STACKTRACE \
         --enable KASAN \
         --enable KASAN_GENERIC \
@@ -108,9 +120,6 @@ apply-muqss-patch:
 
 setup-kernel: (make-kernel "mrproper") generate-config make-kernel install-kernel
     @echo now reboot
-
-install-fridge:
-    sudo -E env "PATH=${PATH}" just make-fridge install
 
 git-clone repo *args=("--recursive"):
     cd "{{invocation_directory()}}" && \
@@ -266,14 +275,6 @@ test *args: (run-mod default_mod_path args)
 test-part-raw part_name *args: (make-in "user/test/FireFerrises-p" + part_name + "-test" args)
 
 test-part part_name: (test "just" "test-part-raw" part_name "test-all")
-
-benchmark branch:
-    git checkout "{{branch}}"
-    just make-mods
-    just load-mod
-    hyperfine 'just test-part-raw 3 test'
-    just unload-mod
-    git checkout -
 
 current-branch:
     git branch --show-current || git rev-parse --abbrev-ref HEAD
