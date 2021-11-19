@@ -229,8 +229,10 @@ compile-commands-non-kernel: (make-non-kernel "clean")
         && sd "$(which ccache)" "$(which gcc)" user/compile_commands.json \
         || true
 
-compile-commands-kernel:
-    cd linux && ./scripts/clang-tools/gen_compile_commands.py
+compile-commands-kernel *args:
+    cd linux && ./scripts/clang-tools/gen_compile_commands.py {{args}}
+
+compile-commands-kernel-dir dir_: (compile-commands-kernel "--output" join(dir_, "compile_commands.json") dir_)
 
 join-compile-commands *dirs:
     #!/usr/bin/env node
@@ -263,7 +265,11 @@ join-compile-commands *dirs:
         process.exit(1);
     });
 
-compile-commands: compile-commands-non-kernel compile-commands-kernel (join-compile-commands "user" "linux")
+compile-commands-all: compile-commands-non-kernel compile-commands-kernel (join-compile-commands "user" "linux")
+
+compile-commands-min: compile-commands-non-kernel (compile-commands-kernel-dir "include") (compile-commands-kernel-dir "kernel/sched") (join-compile-commands "user" "linux/include" "linux/kernel/sched")
+
+compile-commands: compile-commands-min
 
 log *args:
     sudo dmesg --kernel --reltime {{args}}
