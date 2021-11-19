@@ -202,10 +202,14 @@ refmt *paths:
         process.exit(1);
     });
 
-fmt *args:
+_clang_format:
     ln --symbolic --force linux/.clang-format .
-    git clang-format --force "$(just first-commit)" {{args}}
-    just refmt $(just modified-files "$(just first-commit)")
+
+_fmt *args:
+    git clang-format --force {{args}}
+    just refmt $(just modified-files {{args}})
+
+fmt *args: _clang_format (_fmt args)
 
 entire-diff *args:
     git diff "$(just first-commit)" {{args}}
