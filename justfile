@@ -150,7 +150,7 @@ reinstall-kedr:
 # Paranthesized deps to avoid checkpatch repeated word warning
 make: (pre-make) (make-non-kernel) (make-kernel)
 
-install-kernel-no-sudo: (make-kernel "modules_install") (make-kernel "install")
+install-kernel-no-sudo: (make-kernel "headers_install") (make-kernel "modules_install") (make-kernel "install")
 
 install-kernel: make-kernel
     sudo -E env "PATH=${PATH}" just install-kernel-no-sudo
