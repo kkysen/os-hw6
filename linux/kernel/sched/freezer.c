@@ -6,6 +6,12 @@
 
 #pragma GCC diagnostic pop
 
+#define todo_message(message)                                                  \
+	pr_err("TODO%s%s at %s:%d:%s\n", message[0] == 0 ? "" : ": ", message, \
+	       __FILE__, __LINE__, __func__)
+
+#define todo() todo_message("")
+
 /**
  * See `include/linux/sched/rt.h:65`.
  * 100 milliseconds.
@@ -15,12 +21,12 @@
 
 void __init init_sched_freezer_class(void)
 {
-	BUG();
+	todo();
 }
 
 void init_freezer_rq(struct freezer_rq *freezer_rq __always_unused)
 {
-	BUG();
+	todo();
 }
 
 void print_freezer_stats(struct seq_file *m __always_unused,
@@ -197,7 +203,8 @@ static void task_change_group_freezer(struct task_struct *p __always_unused,
 
 #endif
 
-const struct sched_class freezer_sched_class = {
+const struct sched_class freezer_sched_class __section(
+	"__freezer_sched_class") = {
 	.enqueue_task = enqueue_task_freezer, /* idle didn't use this */
 	.dequeue_task = dequeue_task_freezer,
 	.yield_task = yield_task_freezer, /* idle didn't use this */
