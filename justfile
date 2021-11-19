@@ -77,6 +77,8 @@ make-kernel *args: (make-in "linux" args)
 
 make-freezer *args: (make-kernel "kernel/sched/freezer.o")
 
+make-sched *args: (make-kernel "kernel/sched/")
+
 modify-config:
     #!/usr/bin/env bash
     set -euox pipefail
@@ -152,7 +154,7 @@ reinstall-kedr:
 # Paranthesized deps to avoid checkpatch repeated word warning
 make: (pre-make) (make-non-kernel) (make-kernel)
 
-install-kernel-no-sudo: (make-kernel "modules_install") (make-kernel "install")
+install-kernel-no-sudo: (make-kernel "headers_install") (make-kernel "modules_install") (make-kernel "install")
 
 install-kernel: make-kernel
     sudo -E env "PATH=${PATH}" just install-kernel-no-sudo
@@ -200,10 +202,14 @@ refmt *paths:
         process.exit(1);
     });
 
-fmt *args:
+_clang_format:
     ln --symbolic --force linux/.clang-format .
-    git clang-format --force "$(just first-commit)" {{args}}
-    just refmt $(just modified-files "$(just first-commit)")
+
+_fmt *args:
+    git clang-format --force {{args}}
+    just refmt $(just modified-files {{args}})
+
+fmt *args: _clang_format (_fmt args)
 
 entire-diff *args:
     git diff "$(just first-commit)" {{args}}
@@ -223,8 +229,10 @@ compile-commands-non-kernel: (make-non-kernel "clean")
         && sd "$(which ccache)" "$(which gcc)" user/compile_commands.json \
         || true
 
-compile-commands-kernel:
-    cd linux && ./scripts/clang-tools/gen_compile_commands.py
+compile-commands-kernel *args:
+    cd linux && ./scripts/clang-tools/gen_compile_commands.py {{args}}
+
+compile-commands-kernel-dir dir_: (compile-commands-kernel "--output" join(dir_, "compile_commands.json") dir_)
 
 join-compile-commands *dirs:
     #!/usr/bin/env node
@@ -257,7 +265,11 @@ join-compile-commands *dirs:
         process.exit(1);
     });
 
-compile-commands: compile-commands-non-kernel compile-commands-kernel (join-compile-commands "user" "linux")
+compile-commands-all: compile-commands-non-kernel compile-commands-kernel (join-compile-commands "user" "linux")
+
+compile-commands-min: compile-commands-non-kernel (compile-commands-kernel-dir "include") (compile-commands-kernel-dir "kernel/sched") (join-compile-commands "user" "linux/include" "linux/kernel/sched")
+
+compile-commands: compile-commands-min
 
 log *args:
     sudo dmesg --kernel --reltime {{args}}
