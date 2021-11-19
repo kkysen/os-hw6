@@ -1,10 +1,10 @@
+/* Disable for the includes. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 #include "sched.h"
 
-#define todo_message(message)                                                  \
-	pr_err("TODO%s%s at %s:%d:%s\n", message[0] == 0 ? "" : ": ", message, \
-	       __FILE__, __LINE__, __func__)
-
-#define todo() todo_message("")
+#pragma GCC diagnostic pop
 
 /**
  * See `include/linux/sched/rt.h:65`.
@@ -13,150 +13,191 @@
  */
 #define FREEZER_TIMESLICE (100 * HZ / 1000)
 
-static void enqueue_task_freezer(struct rq *rq, struct task_struct *p,
-				 int flags)
+void __init init_sched_freezer_class(void)
 {
-	todo();
+	BUG();
 }
 
-static void dequeue_task_freezer(struct rq *rq, struct task_struct *p,
-				 int flags)
+void init_freezer_rq(struct freezer_rq *freezer_rq __always_unused)
 {
-	todo();
+	BUG();
 }
 
-static void yield_task_freezer(struct rq *rq)
+void print_freezer_stats(struct seq_file *m __always_unused,
+			 int cpu __always_unused)
 {
-	todo();
+	BUG();
 }
 
-static bool yield_to_task_freezer(struct rq *rq, struct task_struct *p)
+void print_freezer_rq(struct seq_file *m __always_unused,
+		      int cpu __always_unused,
+		      struct freezer_rq *freezer_rq __always_unused)
 {
-	todo();
+	BUG();
+}
+
+static void enqueue_task_freezer(struct rq *rq __always_unused,
+				 struct task_struct *p __always_unused,
+				 int flags __always_unused)
+{
+	BUG();
+}
+
+static void dequeue_task_freezer(struct rq *rq __always_unused,
+				 struct task_struct *p __always_unused,
+				 int flags __always_unused)
+{
+	BUG();
+}
+
+static void yield_task_freezer(struct rq *rq __always_unused)
+{
+	BUG();
+}
+
+static bool yield_to_task_freezer(struct rq *rq __always_unused,
+				  struct task_struct *p __always_unused)
+{
+	BUG();
 	return false;
 }
 
-static void check_preempt_curr_freezer(struct rq *rq, struct task_struct *p,
-				       int flags)
+static void check_preempt_curr_freezer(struct rq *rq __always_unused,
+				       struct task_struct *p __always_unused,
+				       int flags __always_unused)
 {
-	todo();
+	BUG();
 }
 
-static struct task_struct *pick_next_task_freezer(struct rq *rq)
+static struct task_struct *pick_next_task_freezer(struct rq *rq __always_unused)
 {
-	todo();
+	BUG();
 	return NULL;
 }
 
-static void put_prev_task_freezer(struct rq *rq, struct task_struct *p)
+static void put_prev_task_freezer(struct rq *rq __always_unused,
+				  struct task_struct *p __always_unused)
 {
-	todo();
+	BUG();
 }
 
-static void set_next_task_freezer(struct rq *rq, struct task_struct *p,
-				  bool first)
+static void set_next_task_freezer(struct rq *rq __always_unused,
+				  struct task_struct *p __always_unused,
+				  bool first __always_unused)
 {
-	todo();
+	BUG();
 }
 
 #ifdef CONFIG_SMP
 
-static int balance_freezer(struct rq *rq, struct task_struct *prev,
-			   struct rq_flags *rf)
+static int balance_freezer(struct rq *rq __always_unused,
+			   struct task_struct *prev __always_unused,
+			   struct rq_flags *rf __always_unused)
 {
-	todo();
+	BUG();
 	return 0;
 }
 
-static int select_task_rq_freezer(struct task_struct *p, int task_cpu,
-				  int sd_flag, int flags)
+static int select_task_rq_freezer(struct task_struct *p __always_unused,
+				  int task_cpu __always_unused,
+				  int sd_flag __always_unused,
+				  int flags __always_unused)
 {
-	todo();
+	BUG();
 	return 0;
 }
 
-static void migrate_task_rq_freezer(struct task_struct *p, int new_cpu)
+static void migrate_task_rq_freezer(struct task_struct *p __always_unused,
+				    int new_cpu __always_unused)
 {
-	todo();
+	BUG();
 }
 
-static void task_woken_freezer(struct rq *this_rq, struct task_struct *task)
+static void task_woken_freezer(struct rq *this_rq __always_unused,
+			       struct task_struct *task __always_unused)
 {
-	todo();
+	BUG();
 }
 
-static void set_cpus_allowed_freezer(struct task_struct *p,
-				     const struct cpumask *newmask)
+static void
+set_cpus_allowed_freezer(struct task_struct *p __always_unused,
+			 const struct cpumask *newmask __always_unused)
 {
-	todo();
+	BUG();
 }
 
-static void rq_online_freezer(struct rq *rq)
+static void rq_online_freezer(struct rq *rq __always_unused)
 {
-	todo();
+	BUG();
 }
 
-static void rq_offline_freezer(struct rq *rq)
+static void rq_offline_freezer(struct rq *rq __always_unused)
 {
-	todo();
+	BUG();
 }
 
 #endif
 
-static void task_tick_freezer(struct rq *rq, struct task_struct *p, int queued)
+static void task_tick_freezer(struct rq *rq __always_unused,
+			      struct task_struct *p __always_unused,
+			      int queued __always_unused)
 {
-	todo();
+	BUG();
 }
 
-static void task_fork_freezer(struct task_struct *p)
+static void task_fork_freezer(struct task_struct *p __always_unused)
 {
-	todo();
+	BUG();
 }
 
-static void task_dead_freezer(struct task_struct *p)
+static void task_dead_freezer(struct task_struct *p __always_unused)
 {
-	todo();
+	BUG();
 }
 
-static void switched_from_freezer(struct rq *this_rq, struct task_struct *task)
+static void switched_from_freezer(struct rq *this_rq __always_unused,
+				  struct task_struct *task __always_unused)
 {
-	todo();
+	BUG();
 }
 
-static void switched_to_freezer(struct rq *this_rq, struct task_struct *task)
+static void switched_to_freezer(struct rq *this_rq __always_unused,
+				struct task_struct *task __always_unused)
 {
-	todo();
+	BUG();
 }
 
-static void prio_changed_freezer(struct rq *this_rq, struct task_struct *task,
-				 int oldprio)
+static void prio_changed_freezer(struct rq *this_rq __always_unused,
+				 struct task_struct *task __always_unused,
+				 int oldprio __always_unused)
 {
-	todo();
+	BUG();
 }
 
-static unsigned int get_rr_interval_freezer(struct rq *rq,
-					    struct task_struct *task)
+static unsigned int
+get_rr_interval_freezer(struct rq *rq __always_unused,
+			struct task_struct *task __always_unused)
 {
-	todo();
+	BUG();
 	return 0;
 }
 
-static void update_curr_freezer(struct rq *rq)
+static void update_curr_freezer(struct rq *rq __always_unused)
 {
-	todo();
+	BUG();
 }
 
 #ifdef CONFIG_FAIR_GROUP_SCHED
 
-static void task_change_group_freezer(struct task_struct *p, int type)
+static void task_change_group_freezer(struct task_struct *p __always_unused,
+				      int type __always_unused)
 {
-	todo();
+	BUG();
 }
 
 #endif
 
-const struct sched_class freezer_sched_class __section(
-	"__freezer_sched_class") = {
+const struct sched_class freezer_sched_class = {
 	.enqueue_task = enqueue_task_freezer, /* idle didn't use this */
 	.dequeue_task = dequeue_task_freezer,
 	.yield_task = yield_task_freezer, /* idle didn't use this */
