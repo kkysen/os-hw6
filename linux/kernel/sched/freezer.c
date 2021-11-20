@@ -241,7 +241,7 @@ static void prio_changed_freezer(struct rq *this_rq __always_unused,
 				 struct task_struct *task __always_unused,
 				 int oldprio __always_unused)
 {
-	return; /* Round Robin */p
+	return; /* Round Robin */
 }
 
 static unsigned int
