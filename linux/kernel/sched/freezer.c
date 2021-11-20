@@ -84,7 +84,11 @@ static void check_preempt_curr_freezer(struct rq *rq __always_unused,
 				       struct task_struct *p __always_unused,
 				       int flags __always_unused)
 {
-	//if(p->freezer == freezer_rq->sched_entities)
+	if(p->sched_class == rq->curr->sched_class)
+		rq->curr->sched_class->check_preempt_curr_freezer(rq, p, flags);
+	else if(p->sched_class > rq->curr->sched_class)
+		resched_curr(rq);
+	
 }
 
 static bool sched_rt_runnable(struct rq *rq)
@@ -97,8 +101,7 @@ static struct task_struct *freezer_task_of(struct sched_freezer_entity *fr_se)
 	return container_of(fr_se, struct task_struct, freezer);
 }
 
-static struct task_struct *pick_next_task_freezer(struct rq *rq __always_unused)
-{
+static struct task_struct *freezer_rq_curr_task(struct rq *rq) {
 	struct freezer_rq *fr_rq;
 	struct freezer_sched_entity *fr_se;
 
@@ -109,6 +112,11 @@ static struct task_struct *pick_next_task_freezer(struct rq *rq __always_unused)
 	return freezer_task_of(fr_se);
 }
 
+static struct task_struct *pick_next_task_freezer(struct rq *rq)
+{
+	return freezer_rq_curr_task(rq);
+}
+
 static void put_prev_task_freezer(struct rq *rq __always_unused,
 				  struct task_struct *prev __always_unused)
 {
@@ -116,7 +124,7 @@ static void put_prev_task_freezer(struct rq *rq __always_unused,
 	struct freezer_rq *freezer_rq;
 
 	for(; se; se=se->parent){
-		freezer_rq = rq_of(freezer_rq);
+		freezer_rq = container_of(freezer_rq, struct rq, freezer);
 		put_prev_entity_freezer(freezer_rq, se);
 	}
 }
@@ -124,13 +132,19 @@ static void put_prev_task_freezer(struct rq *rq __always_unused,
 static void put_prev_entity_freezer(struct freezer_rq *freezer_rq,
 					struct sched_freezer_entity *prev){
 
+	u64 wait_start, prev_wait_start;
+
 	if(prev->on_rq){
-		update_curr(freezer_rq); //to do
+		update_curr_freezer(freezer_rq);
 	}
-	//check_freezer_rq_runtime(freezer_rq);
 	if(prev->on_rq){
-		//update stats
-		//put current back in --> enqueue entity
+		if(sched_stat_enabled()){
+			wait_start = rq_clock(container_of(freezer_rq, struct rq, freezer));
+			prev_wait_start = schedstat_val(prev->statistics.wait_start);
+			__schedstat_set(se->statistics.wait_start, wait_start);
+		}
+		list_add_tail(&prev->freezer.run_list, &rq->freezer.sched_entities);
+		rq->freezer.nr_running++;
 	}
 	freezer_rq->curr = NULL;
 }
@@ -148,7 +162,7 @@ static int balance_freezer(struct rq *rq __always_unused,
 			   struct task_struct *prev __always_unused,
 			   struct rq_flags *rf __always_unused)
 {
-	BUG();
+	/* not reassigning */
 	return 0;
 }
 
@@ -170,7 +184,7 @@ static void migrate_task_rq_freezer(struct task_struct *p __always_unused,
 static void task_woken_freezer(struct rq *this_rq __always_unused,
 			       struct task_struct *task __always_unused)
 {
-	BUG();
+	todo();
 }
 
 static void
@@ -212,41 +226,26 @@ static void task_dead_freezer(struct task_struct *p __always_unused)
 static void switched_from_freezer(struct rq *this_rq __always_unused,
 				  struct task_struct *task __always_unused)
 {
-	BUG();
+	/* nothing to do */
 }
 
 static void switched_to_freezer(struct rq *this_rq __always_unused,
 				struct task_struct *task __always_unused)
 {
-	struct sched_freezer_entity *se = &p->se;
-	struct freezer_rq *freezer_rq = //get rq of
-	//attach
-	//se->cfs_rq;
-
-		attach_entity_cfs_rq(se);
-
-	if (!vruntime_normalized(p))
-		se->vruntime += cfs_rq->min_vruntime;
-
-	// if (task_on_rq_queued(p)) {
-	// 	/*
-	// 	 * We were most likely switched from sched_rt, so
-	// 	 * kick off the schedule if running, otherwise just see
-	// 	 * if we can still preempt the current task.
-	// 	 */
-	// 	if (task_current(rq, p))
-	// 		resched_curr(rq);
-	// 	else
-	// 		check_preempt_curr(rq, p, 0);
-	// }
-
+	if(task_on_rq_queued(task)){
+		if(task_current(rq, task){
+			resched_curr(rq);
+		else{
+			check_preempt_curr_freezer(rq, task, 0);
+		}
+	}
 }
 
 static void prio_changed_freezer(struct rq *this_rq __always_unused,
 				 struct task_struct *task __always_unused,
 				 int oldprio __always_unused)
 {
-	return; /* Round Robin */p
+	return; /* Round Robin */
 }
 
 static unsigned int
@@ -259,9 +258,27 @@ get_rr_interval_freezer(struct rq *rq __always_unused,
 	return 0;
 }
 
-static void update_curr_freezer(struct rq *rq __always_unused)
+static void update_curr_freezer(struct rq *rq)
 {
-	BUG();
+	struct freezer_rq *fr_rq = &rq->freezer;
+	struct sched_freezer_entity *curr = freezer_rq_curr_task(rq);
+	struct task_struct *curr_task = freezer_task_of(curr);
+
+	if (curr->sched_class != &freezer_sched_class)
+		return;
+	u64 now = rq_clock_task(rq);
+	u64 delta_exec;
+	delta_exec = now - curr->se.exec_start;
+	if (unlikely(delta_exec <= 0)) {
+		return;
+	}
+	schedstat_set(curr->se.statistics.exec_max, max(curr->se.statistics.exec_max, delta_exec));
+	curr->se.sum_exec_runtime += delta_exec;
+	curr->se.exec_start = now;
+	fr_rq->time += delta_exec;
+	if (fr_rq->time > FREEZER_TIMESLICE) {
+		resched_curr(curr);
+	}
 }
 
 #ifdef CONFIG_FAIR_GROUP_SCHED
@@ -269,7 +286,7 @@ static void update_curr_freezer(struct rq *rq __always_unused)
 static void task_change_group_freezer(struct task_struct *p __always_unused,
 				      int type __always_unused)
 {
-	return; /* we don't have groups */
+	/* we don't have groups */
 }
 
 #endif
