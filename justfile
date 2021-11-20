@@ -27,7 +27,6 @@ install-program-dependencies:
     cargo quickinstall fd-find
     cargo quickinstall sd
     cargo quickinstall gitui
-    cargo quickinstall hyperfine
 
 parallel-bash-commands:
     echo 'pids=()'
@@ -530,3 +529,167 @@ jiffies:
 split-procs:
     ./user/test/split-procs.sh
 
+watch-kernel-files output_files:
+    #!/usr/bin/env node
+    const fsp = require("fs/promises");
+    const pathLib = require("path");
+    const assert = require("assert/strict");
+    const fs = require("fs");
+    const childProcess = require("child_process");
+
+    function groupBy(a, f) {
+        const o = {};
+        a.forEach((e, i, a) => {
+            const groupName = f(e, i, a);
+            const group = o[groupName] ?? (o[groupName] = []);
+            group.push(e);
+        });
+        return o;
+    }
+
+    function createLookupBy(objs, fields) {
+        assert.notEqual(fields.length, 0);
+        const by = {};
+        const grouped = groupBy(objs, e => e[fields[0]]);
+        for (const [groupName, group] of Object.entries(grouped)) {
+            if (fields.length === 1) {
+                assert.equal(group.length, 1);
+                by[groupName] = group[0];
+            } else {
+                by[groupName] = createLookupBy(group, fields.slice(1));
+            }
+        }
+        return by;
+    }
+
+    async function parseSimpleMakeFile(path) {
+        const contents = await fsp.readFile(path, "utf-8");
+        const statements = contents
+            .replaceAll("\\\n", "")
+            .split("\n")
+            .map(line => {
+                const match = /:=?/.exec(line);
+                if (!match) {
+                    return;
+                }
+                const [matched] = match;
+                const {index, input, groups} = match;
+                const type = {
+                    ":": "rule",
+                    ":=": "def",
+                }[matched];
+                const name = line.slice(0, index).trim();
+                const value = line.slice(index + matched.length).trim();
+                const values = value.split(/\s+/);
+                return {
+                    type,
+                    name,
+                    value,
+                    values,
+                };
+            })
+            .filter(Boolean)
+            ;
+        const by = createLookupBy(statements, ["type", "name"]);
+        return by;
+    }
+
+    async function spawn(options) {
+        const {args} = options;
+        const child = childProcess.spawn(args[0], args.slice(1), options);
+        child.wait = () => new Promise((resolve, reject) => {
+            child.on("exit", (code, signal) => {
+                ((signal || code !== 0) ? reject : resolve)({code, signal});
+            });
+        });
+        child.status = () => new Promise((resolve) => {
+            child.on("exit", (code, signal) => resolve({code, signal}))
+        });
+        return new Promise((resolve, reject) => {
+            child.on("spawn", () => resolve(child));
+            child.on("error", (e) => reject(e));
+        });
+    }
+
+    async function watchKernelFile(outputFile) {
+        const {dir, base} = pathLib.parse(outputFile);
+        const promises = ["cmd", "d"]
+            .map(ext => pathLib.join(dir, `.${base}.${ext}`))
+            .map(parseSimpleMakeFile);
+        const [cmds, deps] = await Promise.all(promises);
+        ["cmd", "source", "deps"].forEach(prefix => {
+            const {def} = cmds;
+            def[prefix] = name => def[`${prefix}_${name}`];
+        });
+        // console.log({cmds, deps});
+        const depPaths = deps.rule["freezer.o"].values;
+        const cmdArgs = cmds.def.cmd(outputFile);
+
+        async function runCommand() {
+            console.log(cmdArgs.value);
+            const child = await spawn({
+                args: cmdArgs.values,
+                stdio: ['inherit', 'inherit', 'inherit'],
+            });
+            const {code, signal} = await child.status();
+            if (signal) {
+                console.warn(`killed by signal ${signal}`);
+            }
+            if (code !== 0) {
+                console.warn(`failed with status ${code}`);
+            } else {
+                console.log(`succeeded`);
+            }
+        }
+
+        const debounceTime = 100; // ms
+
+        let currentCommand = null;
+        let lastTime = 0.0; // ms
+        let commandWaiting = false;
+
+        function run() {
+            lastTime = performance.now();
+            return runCommand()
+                .catch(console.error)
+                .finally(() => {
+                    if (commandWaiting) {
+                        commandWaiting = false;
+                    } else {
+                        currentCommand = null;
+                    }
+                });
+        }
+
+        function onEvent(eventType, fileName) {
+            console.log({eventType, fileName});
+            if (commandWaiting) {
+                // already waiting for next command, no need to repeat
+                return;
+            }
+            if (currentCommand) {
+                const now = performance.now();
+                if (now - lastTime < debounceTime) {
+                    return;
+                }
+                commandWaiting = true;
+                currentCommand.then(run);
+            } else {
+                currentCommand = run();
+            }
+        }
+
+        depPaths.forEach(depPath => fs.watch(depPath, {}, onEvent));
+        console.log(`watching for changes to rebuild: ${outputFile}`);
+    }
+
+    async function main() {
+        const outputFiles = "{{output_files}}".split(" ");
+        process.chdir(pathLib.join("{{justfile_directory()}}", "linux"));
+        await Promise.all(outputFiles.map(file => watchKernelFile(file)));
+    }
+
+    main().catch(e => {
+        console.error(e);
+        process.exit(1);
+    });
