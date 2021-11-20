@@ -68,12 +68,11 @@ static void dequeue_task_freezer(struct rq *rq,
 
 static void yield_task_freezer(struct rq *rq)
 {
-	/* move to end, aka move to next in a circular list */
 	list_rotate_left(&rq->freezer.sched_entities);
 }
 
 static bool yield_to_task_freezer(struct rq *rq,
-				  struct task_struct *p)
+				  struct task_struct *p __always_unused)
 {
 	todo();
 	yield_task_freezer(rq);
@@ -84,14 +83,11 @@ static void check_preempt_curr_freezer(struct rq *rq __always_unused,
 				       struct task_struct *p __always_unused,
 				       int flags __always_unused)
 {
-	if(p->sched_class == rq->curr->sched_class)
-		rq->curr->sched_class->check_preempt_curr_freezer(rq, p, flags);
-	else if(p->sched_class > rq->curr->sched_class)
+	if (p->sched_class > rq->curr->sched_class)
 		resched_curr(rq);
-	
 }
 
-static bool sched_rt_runnable(struct rq *rq)
+static bool sched_freezer_runnable(struct rq *rq)
 {
 	return rq->freezer.nr_running > 0;
 }
@@ -101,59 +97,85 @@ static struct task_struct *freezer_task_of(struct sched_freezer_entity *fr_se)
 	return container_of(fr_se, struct task_struct, freezer);
 }
 
-static struct task_struct *freezer_rq_curr_task(struct rq *rq) {
-	struct freezer_rq *fr_rq;
-	struct freezer_sched_entity *fr_se;
+// static struct task_struct *freezer_rq_curr_task(struct rq *rq) {
+	
+// }
 
-	if (!sched_rt_runnable(rq))
+static struct task_struct *pick_next_task_freezer(struct rq *rq)
+{
+	struct freezer_rq *fr_rq;
+	struct sched_freezer_entity *fr_se;
+
+	if (!sched_freezer_runnable(rq))
 		return NULL;
 	fr_rq = &rq->freezer;
 	fr_se = list_first_entry(&fr_rq->sched_entities, typeof(*fr_se), run_list);
 	return freezer_task_of(fr_se);
 }
 
-static struct task_struct *pick_next_task_freezer(struct rq *rq)
+static void put_prev_task_freezer(struct rq *rq,
+				  struct task_struct *prev)
 {
-	return freezer_rq_curr_task(rq);
+	list_move_tail(&prev->freezer.run_list, &rq->freezer.sched_entities);
 }
 
-static void put_prev_task_freezer(struct rq *rq __always_unused,
-				  struct task_struct *prev __always_unused)
+// static struct rq *rq_of_freezer_rq(struct freezer_rq *fr_rq) {
+// 	return container_of(fr_rq, struct rq, freezer);
+// }
+
+static void update_curr_freezer(struct rq *rq)
 {
-	struct sched_freezer_entity *se = &prev->se;
-	struct freezer_rq *freezer_rq;
+	struct freezer_rq *fr_rq;
+	struct task_struct *curr;
+	u64 now;
+	u64 delta_exec;
 
-	for(; se; se=se->parent){
-		freezer_rq = container_of(freezer_rq, struct rq, freezer);
-		put_prev_entity_freezer(freezer_rq, se);
-	}
+	fr_rq = &rq->freezer;
+	curr = rq->curr;
+
+	if (curr->sched_class != &freezer_sched_class)
+		return;
+	now = rq_clock_task(rq);
+	delta_exec = now - curr->se.exec_start;
+	if (unlikely(delta_exec <= 0))
+		return;
+	schedstat_set(curr->se.statistics.exec_max, max(curr->se.statistics.exec_max, delta_exec));
+	curr->se.sum_exec_runtime += delta_exec;
+	curr->se.exec_start = now;
+	fr_rq->runtime += delta_exec;
+	if (fr_rq->runtime > FREEZER_TIMESLICE)
+		resched_curr(rq);
 }
 
-static void put_prev_entity_freezer(struct freezer_rq *freezer_rq,
-					struct sched_freezer_entity *prev){
+// static void put_prev_entity_freezer(struct freezer_rq *fr_rq,
+// 					struct sched_freezer_entity *prev){
 
-	u64 wait_start, prev_wait_start;
+// 	u64 wait_start;
+// 	u64 prev_wait_start;
+// 	struct task_struct *prev_task;
 
-	if(prev->on_rq){
-		update_curr_freezer(freezer_rq);
-	}
-	if(prev->on_rq){
-		if(sched_stat_enabled()){
-			wait_start = rq_clock(container_of(freezer_rq, struct rq, freezer));
-			prev_wait_start = schedstat_val(prev->statistics.wait_start);
-			__schedstat_set(se->statistics.wait_start, wait_start);
-		}
-		list_add_tail(&prev->freezer.run_list, &rq->freezer.sched_entities);
-		rq->freezer.nr_running++;
-	}
-	freezer_rq->curr = NULL;
-}
+// 	prev_task = freezer_task_of(prev);
+
+// 	if (prev_task->on_rq) {
+// 		update_curr_freezer(rq);
+// 	}
+// 	if (prev_task->on_rq) {
+// 		if (sched_stat_enabled()) {
+// 			wait_start = rq_clock(rq_of_freezer_rq(fr_rq));
+// 			prev_wait_start = schedstat_val(prev->statistics.wait_start);
+// 			__schedstat_set(se->statistics.wait_start, wait_start);
+// 		}
+// 		list_add_tail(&prev->freezer.run_list, &rq->freezer.sched_entities);
+// 		rq->freezer.nr_running++;
+// 	}
+// 	freezer_rq->curr = NULL;
+// }
 
 static void set_next_task_freezer(struct rq *rq __always_unused,
 				  struct task_struct *p __always_unused,
 				  bool first __always_unused)
 {
-	BUG();
+	
 }
 
 #ifdef CONFIG_SMP
@@ -223,29 +245,28 @@ static void task_dead_freezer(struct task_struct *p __always_unused)
 	/* nothing to do */
 }
 
-static void switched_from_freezer(struct rq *this_rq __always_unused,
+static void switched_from_freezer(struct rq *rq __always_unused,
 				  struct task_struct *task __always_unused)
 {
 	/* nothing to do */
 }
 
-static void switched_to_freezer(struct rq *this_rq __always_unused,
-				struct task_struct *task __always_unused)
+static void switched_to_freezer(struct rq *rq,
+				struct task_struct *task)
 {
-	if(task_on_rq_queued(task)){
-		if(task_current(rq, task){
-			resched_curr(rq);
-		else{
-			check_preempt_curr_freezer(rq, task, 0);
-		}
-	}
+	if (!task_on_rq_queued(task))
+		return;
+	if (task_current(rq, task))
+		resched_curr(rq);
+	else
+		check_preempt_curr_freezer(rq, task, 0);
 }
 
 static void prio_changed_freezer(struct rq *this_rq __always_unused,
 				 struct task_struct *task __always_unused,
 				 int oldprio __always_unused)
 {
-	return; /* Round Robin */
+	/* Round Robin */
 }
 
 static unsigned int
@@ -258,29 +279,6 @@ get_rr_interval_freezer(struct rq *rq __always_unused,
 	return 0;
 }
 
-static void update_curr_freezer(struct rq *rq)
-{
-	struct freezer_rq *fr_rq = &rq->freezer;
-	struct sched_freezer_entity *curr = freezer_rq_curr_task(rq);
-	struct task_struct *curr_task = freezer_task_of(curr);
-
-	if (curr->sched_class != &freezer_sched_class)
-		return;
-	u64 now = rq_clock_task(rq);
-	u64 delta_exec;
-	delta_exec = now - curr->se.exec_start;
-	if (unlikely(delta_exec <= 0)) {
-		return;
-	}
-	schedstat_set(curr->se.statistics.exec_max, max(curr->se.statistics.exec_max, delta_exec));
-	curr->se.sum_exec_runtime += delta_exec;
-	curr->se.exec_start = now;
-	fr_rq->time += delta_exec;
-	if (fr_rq->time > FREEZER_TIMESLICE) {
-		resched_curr(curr);
-	}
-}
-
 #ifdef CONFIG_FAIR_GROUP_SCHED
 
 static void task_change_group_freezer(struct task_struct *p __always_unused,
@@ -291,6 +289,10 @@ static void task_change_group_freezer(struct task_struct *p __always_unused,
 
 #endif
 
+/**
+ * Not directly used but used through the section name,
+ * which is why there's a `__always_unused`.
+ */
 const struct sched_class freezer_sched_class __section(
 	"__freezer_sched_class") = {
 	.enqueue_task = enqueue_task_freezer, /* idle didn't use this */
