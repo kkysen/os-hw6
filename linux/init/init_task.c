@@ -90,6 +90,9 @@ struct task_struct init_task
 	.se		= {
 		.group_node 	= LIST_HEAD_INIT(init_task.se.group_node),
 	},
+	.freezer		= {
+		.run_list	= LIST_HEAD_INIT(init_task.freezer.run_list),
+	},
 	.rt		= {
 		.run_list	= LIST_HEAD_INIT(init_task.rt.run_list),
 		.time_slice	= RR_TIMESLICE,

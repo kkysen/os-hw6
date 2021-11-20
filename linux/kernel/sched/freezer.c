@@ -32,6 +32,10 @@ void init_freezer_rq(struct freezer_rq *fr_rq)
 	fr_rq->runtime = 0;
 }
 
+void init_sched_freezer_entity(struct sched_freezer_entity *fr_se) {
+	INIT_LIST_HEAD(&fr_se->run_list);
+}
+
 void print_freezer_stats(struct seq_file *m __always_unused,
 			 int cpu __always_unused)
 {
