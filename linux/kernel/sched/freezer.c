@@ -24,9 +24,12 @@ void __init init_sched_freezer_class(void)
 	todo();
 }
 
-void init_freezer_rq(struct freezer_rq *freezer_rq __always_unused)
+void init_freezer_rq(struct freezer_rq *fr_rq)
 {
-	todo();
+	fr_rq->nr_running = 0;
+	INIT_LIST_HEAD(&fr_rq->sched_entities);
+	spin_lock_init(&fr_rq->lock);
+	fr_rq->runtime = 0;
 }
 
 void print_freezer_stats(struct seq_file *m __always_unused,
@@ -42,49 +45,90 @@ void print_freezer_rq(struct seq_file *m __always_unused,
 	BUG();
 }
 
-static void enqueue_task_freezer(struct rq *rq __always_unused,
-				 struct task_struct *p __always_unused,
+static void enqueue_task_freezer(struct rq *rq,
+				 struct task_struct *p,
 				 int flags __always_unused)
 {
-	BUG();
+	/* run_list should always be initialized */
+	list_add_tail(&p->freezer.run_list, &rq->freezer.sched_entities);
+	rq->freezer.nr_running++;
 }
 
-static void dequeue_task_freezer(struct rq *rq __always_unused,
-				 struct task_struct *p __always_unused,
+static void dequeue_task_freezer(struct rq *rq,
+				 struct task_struct *p,
 				 int flags __always_unused)
 {
-	BUG();
+	list_del_init(&p->freezer.run_list);
+	rq->freezer.nr_running--;
 }
 
-static void yield_task_freezer(struct rq *rq __always_unused)
+static void yield_task_freezer(struct rq *rq)
 {
-	BUG();
+	/* move to end, aka move to next in a circular list */
+	list_rotate_left(&rq->freezer.sched_entities);
 }
 
-static bool yield_to_task_freezer(struct rq *rq __always_unused,
-				  struct task_struct *p __always_unused)
+static bool yield_to_task_freezer(struct rq *rq,
+				  struct task_struct *p)
 {
-	BUG();
-	return false;
+	todo();
+	yield_task_freezer(rq);
+	return true;
 }
 
 static void check_preempt_curr_freezer(struct rq *rq __always_unused,
 				       struct task_struct *p __always_unused,
 				       int flags __always_unused)
 {
-	BUG();
+	//if(p->freezer == freezer_rq->sched_entities)
+}
+
+static bool sched_rt_runnable(struct rq *rq)
+{
+	return rq->freezer.nr_running > 0;
+}
+
+static struct task_struct *freezer_task_of(struct sched_freezer_entity *fr_se)
+{
+	return container_of(fr_se, struct task_struct, freezer);
 }
 
 static struct task_struct *pick_next_task_freezer(struct rq *rq __always_unused)
 {
-	BUG();
-	return NULL;
+	struct freezer_rq *fr_rq;
+	struct freezer_sched_entity *fr_se;
+
+	if (!sched_rt_runnable(rq))
+		return NULL;
+	fr_rq = &rq->freezer;
+	fr_se = list_first_entry(&fr_rq->sched_entities, typeof(*fr_se), run_list);
+	return freezer_task_of(fr_se);
 }
 
 static void put_prev_task_freezer(struct rq *rq __always_unused,
-				  struct task_struct *p __always_unused)
+				  struct task_struct *prev __always_unused)
 {
-	BUG();
+	struct sched_freezer_entity *se = &prev->se;
+	struct freezer_rq *freezer_rq;
+
+	for(; se; se=se->parent){
+		freezer_rq = rq_of(freezer_rq);
+		put_prev_entity_freezer(freezer_rq, se);
+	}
+}
+
+static void put_prev_entity_freezer(struct freezer_rq *freezer_rq,
+					struct sched_freezer_entity *prev){
+
+	if(prev->on_rq){
+		update_curr(freezer_rq); //to do
+	}
+	//check_freezer_rq_runtime(freezer_rq);
+	if(prev->on_rq){
+		//update stats
+		//put current back in --> enqueue entity
+	}
+	freezer_rq->curr = NULL;
 }
 
 static void set_next_task_freezer(struct rq *rq __always_unused,
@@ -116,7 +160,7 @@ static int select_task_rq_freezer(struct task_struct *p __always_unused,
 static void migrate_task_rq_freezer(struct task_struct *p __always_unused,
 				    int new_cpu __always_unused)
 {
-	BUG();
+	todo();
 }
 
 static void task_woken_freezer(struct rq *this_rq __always_unused,
@@ -126,10 +170,10 @@ static void task_woken_freezer(struct rq *this_rq __always_unused,
 }
 
 static void
-set_cpus_allowed_freezer(struct task_struct *p __always_unused,
-			 const struct cpumask *newmask __always_unused)
+set_cpus_allowed_freezer(struct task_struct *p,
+			 const struct cpumask *newmask)
 {
-	BUG();
+	set_cpus_allowed_common(p, newmask);
 }
 
 static void rq_online_freezer(struct rq *rq __always_unused)
@@ -153,12 +197,12 @@ static void task_tick_freezer(struct rq *rq __always_unused,
 
 static void task_fork_freezer(struct task_struct *p __always_unused)
 {
-	BUG();
+	/* nothing to do */
 }
 
 static void task_dead_freezer(struct task_struct *p __always_unused)
 {
-	BUG();
+	/* nothing to do */
 }
 
 static void switched_from_freezer(struct rq *this_rq __always_unused,
@@ -170,21 +214,44 @@ static void switched_from_freezer(struct rq *this_rq __always_unused,
 static void switched_to_freezer(struct rq *this_rq __always_unused,
 				struct task_struct *task __always_unused)
 {
-	BUG();
+	struct sched_freezer_entity *se = &p->se;
+	struct freezer_rq *freezer_rq = //get rq of
+	//attach
+	//se->cfs_rq;
+
+		attach_entity_cfs_rq(se);
+
+	if (!vruntime_normalized(p))
+		se->vruntime += cfs_rq->min_vruntime;
+
+	// if (task_on_rq_queued(p)) {
+	// 	/*
+	// 	 * We were most likely switched from sched_rt, so
+	// 	 * kick off the schedule if running, otherwise just see
+	// 	 * if we can still preempt the current task.
+	// 	 */
+	// 	if (task_current(rq, p))
+	// 		resched_curr(rq);
+	// 	else
+	// 		check_preempt_curr(rq, p, 0);
+	// }
+
 }
 
 static void prio_changed_freezer(struct rq *this_rq __always_unused,
 				 struct task_struct *task __always_unused,
 				 int oldprio __always_unused)
 {
-	BUG();
+	return; /* Round Robin */p
 }
 
 static unsigned int
 get_rr_interval_freezer(struct rq *rq __always_unused,
 			struct task_struct *task __always_unused)
 {
-	BUG();
+	if(task->policy == SCHED_FREEZER){
+		return FREEZER_TIMESLICE;
+	}
 	return 0;
 }
 
@@ -198,7 +265,7 @@ static void update_curr_freezer(struct rq *rq __always_unused)
 static void task_change_group_freezer(struct task_struct *p __always_unused,
 				      int type __always_unused)
 {
-	BUG();
+	return; /* we don't have groups */
 }
 
 #endif
