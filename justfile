@@ -212,8 +212,8 @@ _fmt *args:
 
 fmt *args: _clang_format (_fmt args)
 
-entire-diff *args:
-    git diff "$(just first-commit)" {{args}}
+entire-diff *files:
+    git diff "$(just first-commit)" -- {{files}}
 
 pre-commit-fast: fmt check-patch
 
@@ -344,8 +344,11 @@ unload-mod name=file_stem(default_mod_path):
 # `path` is `path_` instead to appease checkpatch's repeated word warning
 unload-mod-by-path path_=default_mod_path: (unload-mod file_stem(path_))
 
-check-patch:
-    ./run_checkpatch.sh
+check_patch_ignores_common := "FILE_PATH_CHANGES,SPDX_LICENSE_TAG,MISSING_EOF_NEWLINE"
+check_patch_ignores_hw := "EXPORT_SYMBOL,ENOSYS,AVOID_EXTERNS,LINE_CONTINUATIONS,AVOID_BUG"
+
+check-patch *files:
+    just entire-diff {{files}} | ./linux/scripts/checkpatch.pl --ignore "{{check_patch_ignores_common}},{{check_patch_ignores_hw}}"
 
 filter-exec:
     #!/usr/bin/env node
