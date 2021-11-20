@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include "syscall.h"
 
+#ifndef SCHED_FREEZER
+#define SCHED_FREEZER 7
+#endif
+
 /*Have not tested for with freezer since freezer implementation is not complete
 but works for other sched policies when run with sudo(can we fix that?)*/
 

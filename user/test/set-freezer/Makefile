@@ -16,7 +16,7 @@ set-freezer.o: set-freezer.c
 
 .PHONY: clean
 clean:
-	rm -f *.o a.out core set-freezer
+	rm -f *.o a.out core* set-freezer
 
 .PHONY: all
 	all: clean main
