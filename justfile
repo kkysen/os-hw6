@@ -74,7 +74,9 @@ make-non-kernel *args: (make-user args)
 
 make-kernel *args: (make-in "linux" args)
 
-make-freezer *args: (make-kernel "kernel/sched/freezer.o")
+freezer_o := "kernel/sched/freezer.o"
+
+make-freezer *args: (make-kernel freezer_o)
 
 make-sched *args: (make-kernel "kernel/sched/")
 
@@ -529,7 +531,8 @@ jiffies:
 split-procs:
     ./user/test/split-procs.sh
 
-watch-kernel-files output_files:
+# args = files -- extra args
+watch-kernel-files *args:
     #!/usr/bin/env node
     const fsp = require("fs/promises");
     const pathLib = require("path");
@@ -596,6 +599,8 @@ watch-kernel-files output_files:
 
     async function spawn(options) {
         const {args} = options;
+        // console.log(args.join(" "));
+        console.log([...args.slice(0, 5), "...", ...args.slice(-5)].join(" "));
         const child = childProcess.spawn(args[0], args.slice(1), options);
         child.wait = () => new Promise((resolve, reject) => {
             child.on("exit", (code, signal) => {
@@ -611,7 +616,7 @@ watch-kernel-files output_files:
         });
     }
 
-    async function watchKernelFile(outputFile) {
+    async function watchKernelFile({outputFile, extraArgs}) {
         const {dir, base} = pathLib.parse(outputFile);
         const promises = ["cmd", "d"]
             .map(ext => pathLib.join(dir, `.${base}.${ext}`))
@@ -626,10 +631,13 @@ watch-kernel-files output_files:
         const cmdArgs = cmds.def.cmd(outputFile);
 
         async function runCommand() {
-            console.log(cmdArgs.value);
+            // console.log(cmdArgs.value);
+            console.log();
+            console.log(`rebuilding: ${outputFile}`);
             const child = await spawn({
-                args: cmdArgs.values,
+                args: [...cmdArgs.values, ...extraArgs],
                 stdio: ['inherit', 'inherit', 'inherit'],
+                shell: true,
             });
             const {code, signal} = await child.status();
             if (signal) {
@@ -640,6 +648,7 @@ watch-kernel-files output_files:
             } else {
                 console.log(`succeeded`);
             }
+            console.log();
         }
 
         const debounceTime = 100; // ms
@@ -681,15 +690,25 @@ watch-kernel-files output_files:
 
         depPaths.forEach(depPath => fs.watch(depPath, {}, onEvent));
         console.log(`watching for changes to rebuild: ${outputFile}`);
+        currentCommand = run();
     }
 
     async function main() {
-        const outputFiles = "{{output_files}}".split(" ");
+        const [outputFiles, extraArgs] = "{{args}}"
+            .split(" -- ")
+            .map(s => s.split(" "))
+            ;
+
         process.chdir(pathLib.join("{{justfile_directory()}}", "linux"));
-        await Promise.all(outputFiles.map(file => watchKernelFile(file)));
+        await Promise.all(outputFiles.map(outputFile => watchKernelFile({
+            outputFile,
+            extraArgs,
+        })));
     }
 
     main().catch(e => {
         console.error(e);
         process.exit(1);
     });
+
+watch-freezer *args: (watch-kernel-files freezer_o "--" args)
