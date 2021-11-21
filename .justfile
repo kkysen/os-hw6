@@ -626,22 +626,19 @@ watch-kernel-files *args:
 
     async function watchKernelFile({outputFile, extraArgs}) {
         const {dir, base} = pathLib.parse(outputFile);
-        const promises = ["cmd", "d"]
+        const [cmdPath, depsPath] = ["cmd", "d"]
             .map(ext => pathLib.join(dir, `.${base}.${ext}`))
-            .map(parseSimpleMakeFile);
-        const [cmds, deps] = await Promise.all(promises);
+            ;
+        const cmds = await parseSimpleMakeFile(cmdPath);
         ["cmd", "source", "deps"].forEach(prefix => {
             const {def} = cmds;
             def[prefix] = name => def[`${prefix}_${name}`];
         });
-        // console.log({cmds, deps});
-        const depPaths = deps.rule["freezer.o"].values;
         const cmdArgs = cmds.def.cmd(outputFile);
 
-        async function runCommand() {
-            // console.log(cmdArgs.value);
+        async function runCommandWithExtraArgs({extraArgs, reason}) {
             console.log();
-            console.log(`rebuilding: ${outputFile}`);
+            console.log(`${reason}: ${outputFile}`);
             const child = await spawn({
                 args: [
                     ...cmdArgs.values,
@@ -665,6 +662,26 @@ watch-kernel-files *args:
                 console.log(`succeeded`);
             }
             console.log();
+        }
+
+        try {
+            await fsp.access(depsPath, fs.constants.R_OK);
+        } catch {
+            await runCommandWithExtraArgs({
+                extraArgs: [],
+                reason: "building once for dependencies",
+            });
+        }
+
+        const deps = await parseSimpleMakeFile(depsPath);
+        const depPaths = deps.rule[base].values;
+        // console.log({cmds, deps});
+
+        async function runCommand() {
+            await runCommandWithExtraArgs({
+                extraArgs,
+                reason: "rebuilding",
+            });
         }
 
         const debounceTime = 100; // ms

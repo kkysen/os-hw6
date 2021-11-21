@@ -19,7 +19,8 @@ if [[ ! -x jiffies ]]; then
     echo '#include <stdio.h>' > jiffies.c
     echo "#define HZ ${HZ}" >> jiffies.c
     rg '#define INITIAL_JIFFIES' $include/linux/jiffies.h >> jiffies.c
-    echo 'int main() { printf("%lu\n", INITIAL_JIFFIES); return 0; }' >> jiffies.c
+    echo 'int main() { printf("%lu\n", INITIAL_JIFFIES); return 0; }' \
+        >> jiffies.c
     gcc jiffies.c -o jiffies
 fi
 initial_jiffies=$(./jiffies)
