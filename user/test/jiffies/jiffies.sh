@@ -4,7 +4,11 @@ set -euo pipefail
 
 cd $(dirname $0)
 
-HZ=$(rg 'CONFIG_HZ=([0-9]+)' --only-matching --replace '$1' /boot/config-$(uname -r))
+HZ=$(rg 'CONFIG_HZ=([0-9]+)' \
+    --only-matching \
+    --replace '$1' \
+    /boot/config-$(uname -r) \
+)
 
 if [[ ! -x jiffies ]]; then
     linux=/lib/modules/$(uname -r)/build
@@ -21,7 +25,10 @@ fi
 initial_jiffies=$(./jiffies)
 
 uptime=$(cut -f1 -d' ' /proc/uptime)
-jiffies=$(sudo cat /proc/timer_list | rg '^jiffies: ([0-9]+)$' --replace '$1' | tail -n 1)
+jiffies=$(sudo cat /proc/timer_list \
+    | rg '^jiffies: ([0-9]+)$' --replace '$1' \
+    | tail -n 1 \
+)
 time=$(date +'%M:%S')
 
 seconds=$(python3 -c "print(($jiffies - $initial_jiffies) / $HZ)")
