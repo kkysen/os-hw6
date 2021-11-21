@@ -6,13 +6,6 @@
 
 #pragma GCC diagnostic pop
 
-/**
- * See `include/linux/sched/rt.h:65`.
- * 100 milliseconds.
- * Should this be in a header file like `rt.h`.
- */
-#define FREEZER_TIMESLICE (100 * HZ / 1000)
-
 void __init init_sched_freezer_class(void)
 {
 	BUG();
