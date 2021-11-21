@@ -118,9 +118,12 @@ static void put_prev_task_freezer(struct rq *rq, struct task_struct *prev)
 	list_move_tail(&prev->freezer.run_list, &rq->freezer.sched_entities);
 }
 
-// static struct rq *rq_of_freezer_rq(struct freezer_rq *fr_rq) {
-// 	return container_of(fr_rq, struct rq, freezer);
-// }
+#if 0
+static struct rq *rq_of_freezer_rq(struct freezer_rq *fr_rq)
+{
+	return container_of(fr_rq, struct rq, freezer);
+}
+#endif
 
 static void update_curr_freezer(struct rq *rq)
 {
@@ -147,29 +150,33 @@ static void update_curr_freezer(struct rq *rq)
 		resched_curr(rq);
 }
 
-// static void put_prev_entity_freezer(struct freezer_rq *fr_rq,
-// 					struct sched_freezer_entity *prev){
+#if 0
+static void put_prev_entity_freezer(struct freezer_rq *fr_rq,
+					struct sched_freezer_entity *prev)
+{
 
-// 	u64 wait_start;
-// 	u64 prev_wait_start;
-// 	struct task_struct *prev_task;
+	u64 wait_start;
+	u64 prev_wait_start;
+	struct task_struct *prev_task;
 
-// 	prev_task = freezer_task_of(prev);
+	prev_task = freezer_task_of(prev);
 
-// 	if (prev_task->on_rq) {
-// 		update_curr_freezer(rq);
-// 	}
-// 	if (prev_task->on_rq) {
-// 		if (sched_stat_enabled()) {
-// 			wait_start = rq_clock(rq_of_freezer_rq(fr_rq));
-// 			prev_wait_start = schedstat_val(prev->statistics.wait_start);
-// 			__schedstat_set(se->statistics.wait_start, wait_start);
-// 		}
-// 		list_add_tail(&prev->freezer.run_list, &rq->freezer.sched_entities);
-// 		rq->freezer.nr_running++;
-// 	}
-// 	freezer_rq->curr = NULL;
-// }
+	if (prev_task->on_rq)
+		update_curr_freezer(rq);
+	if (prev_task->on_rq) {
+		if (sched_stat_enabled()) {
+			wait_start = rq_clock(rq_of_freezer_rq(fr_rq));
+			prev_wait_start =
+				schedstat_val(prev->statistics.wait_start);
+			__schedstat_set(se->statistics.wait_start, wait_start);
+		}
+		list_add_tail(&prev->freezer.run_list,
+			&rq->freezer.sched_entities);
+		rq->freezer.nr_running++;
+	}
+	freezer_rq->curr = NULL;
+}
+#endif
 
 static void set_next_task_freezer(struct rq *rq __always_unused,
 				  struct task_struct *p __always_unused,
@@ -235,22 +242,28 @@ static void task_tick_freezer(struct rq *rq __always_unused,
 			      int queued __always_unused)
 {
 	/**
-	 * Called from the timer interrupt handler. p is the currently running task
- 	 * and rq is the runqueue that it's on.
-	 * It is called whenever a timer interrupt happens, and its job is to perform bookeeping
-	 * and set the need_resched flag if the currently-running process needs to be preempted:
+	 * Called from the timer interrupt handler.
+	 * `p` is the currently running task and
+	 * `rq` is the runqueue that it's on.
+	 * It is called whenever a timer interrupt happens,
+	 * and its job is to perform bookeeping and set the run `resched_curr`
+	 * if the currently-running process needs to be preempted.
 	 */
-	struct sched_freezer_entity *freezer_entity = &p->freezer;
+	struct sched_freezer_entity *fr_se;
+
+	fr_se = &p->freezer;
 	update_curr_freezer(rq);
 	if (p->policy != SCHED_FREEZER)
 		return;
-	if (--p->freezer.remaining_runtime > 0)
+	if (--fr_se->remaining_runtime > 0)
 		return;
-	if (freezer_entity->run_list.prev != freezer_entity->run_list.next)
+	if (fr_se->run_list.prev != fr_se->run_list.next)
+		todo();
+		#if 0
 		list_move_tail(&prev->freezer.run_list,
 			       &rq->freezer.sched_entities);
+		#endif
 	resched_curr(rq);
-	return;
 }
 
 static void task_fork_freezer(struct task_struct *p __always_unused)
@@ -290,9 +303,8 @@ static unsigned int
 get_rr_interval_freezer(struct rq *rq __always_unused,
 			struct task_struct *task __always_unused)
 {
-	if (task->policy == SCHED_FREEZER) {
+	if (task->policy == SCHED_FREEZER)
 		return FREEZER_TIMESLICE;
-	}
 	return 0;
 }
 
