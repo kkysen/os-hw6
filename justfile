@@ -533,10 +533,10 @@ trace-with tracer_name cpu *args: trace-stop (tracer tracer_name) trace-start &&
 trace *args: (trace-with "function_graph" "" args)
 
 jiffies:
-    ./user/test/jiffies.sh
+    ./user/test/jiffies/jiffies.sh
 
 split-procs:
-    ./user/test/split-procs.sh
+    ./user/test/split-procs/split-procs.sh
 
 # args = files -- extra args
 watch-kernel-files *args:
