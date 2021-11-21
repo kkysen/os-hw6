@@ -642,7 +642,15 @@ watch-kernel-files *args:
             console.log();
             console.log(`rebuilding: ${outputFile}`);
             const child = await spawn({
-                args: [...cmdArgs.values, ...extraArgs],
+                args: [
+                    ...cmdArgs.values,
+                    ...extraArgs.map(arg => {
+                        if (arg === "{}") {
+                            return cmds.def.source(outputFile).value;
+                        }
+                        return arg;
+                    }),
+                ],
                 stdio: ['inherit', 'inherit', 'inherit'],
                 shell: true,
             });
