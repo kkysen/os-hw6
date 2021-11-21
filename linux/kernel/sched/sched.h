@@ -168,6 +168,11 @@ static inline int fair_policy(int policy)
 	return policy == SCHED_NORMAL || policy == SCHED_BATCH;
 }
 
+static inline int freezer_policy(int policy)
+{
+	return policy == SCHED_FREEZER;
+}
+
 static inline int rt_policy(int policy)
 {
 	return policy == SCHED_FIFO || policy == SCHED_RR;
@@ -177,15 +182,21 @@ static inline int dl_policy(int policy)
 {
 	return policy == SCHED_DEADLINE;
 }
+
 static inline bool valid_policy(int policy)
 {
 	return idle_policy(policy) || fair_policy(policy) ||
-		rt_policy(policy) || dl_policy(policy);
+		rt_policy(policy) || dl_policy(policy) || freezer_policy(policy);
 }
 
 static inline int task_has_idle_policy(struct task_struct *p)
 {
 	return idle_policy(p->policy);
+}
+
+static inline int task_has_freezer_policy(struct task_struct *p)
+{
+	return freezer_policy(p->policy);
 }
 
 static inline int task_has_rt_policy(struct task_struct *p)

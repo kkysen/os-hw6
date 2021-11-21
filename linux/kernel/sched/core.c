@@ -2404,7 +2404,8 @@ void sched_set_stop_task(int cpu, struct task_struct *stop)
 #else
 
 static inline int __set_cpus_allowed_ptr(struct task_struct *p,
-					 const struct cpumask *new_mask, bool check)
+					 cons
+					 t struct cpumask *new_mask, bool check)
 {
 	return set_cpus_allowed_ptr(p, new_mask);
 }
@@ -3264,6 +3265,8 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 		return -EAGAIN;
 	else if (rt_prio(p->prio))
 		p->sched_class = &rt_sched_class;
+	else if (freezer_policy(p->policy))
+		p->sched_class = &freezer_sched_class;
 	else
 		p->sched_class = &fair_sched_class;
 
@@ -5189,6 +5192,8 @@ static void __setscheduler(struct rq *rq, struct task_struct *p,
 		p->sched_class = &dl_sched_class;
 	else if (rt_prio(p->prio))
 		p->sched_class = &rt_sched_class;
+	else if (freezer_policy(p->policy))
+		p->sched_class = &freezer_sched_class;
 	else
 		p->sched_class = &fair_sched_class;
 }
