@@ -93,6 +93,7 @@ struct task_struct init_task
 	},
 	.freezer		= {
 		.run_list	= LIST_HEAD_INIT(init_task.freezer.run_list),
+		.remaining_runtime	= FREEZER_TIMESLICE,
 	},
 	.rt		= {
 		.run_list	= LIST_HEAD_INIT(init_task.rt.run_list),
