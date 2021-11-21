@@ -1,0 +1,1 @@
+cmd_/home/ajr2021/Desktop/hw6-41-FireFerrises/user/module/itme/quicktimer.mod := { echo  /home/ajr2021/Desktop/hw6-41-FireFerrises/user/module/itme/quicktimer.o;  echo; } > /home/ajr2021/Desktop/hw6-41-FireFerrises/user/module/itme/quicktimer.mod
