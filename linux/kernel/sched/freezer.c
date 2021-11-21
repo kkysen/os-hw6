@@ -229,7 +229,6 @@ static void rq_online_freezer(struct rq *rq __always_unused)
 
 static void rq_offline_freezer(struct rq *rq __always_unused)
 {
-
 	/*Assumes the lock is held */
 	if (rq->online) {
 	}
@@ -237,8 +236,7 @@ static void rq_offline_freezer(struct rq *rq __always_unused)
 
 #endif
 
-static void task_tick_freezer(struct rq *rq __always_unused,
-			      struct task_struct *p __always_unused,
+static void task_tick_freezer(struct rq *rq, struct task_struct *p,
 			      int queued __always_unused)
 {
 	/**
@@ -257,12 +255,9 @@ static void task_tick_freezer(struct rq *rq __always_unused,
 		return;
 	if (--fr_se->remaining_runtime > 0)
 		return;
-	if (fr_se->run_list.prev != fr_se->run_list.next)
-		todo();
-		#if 0
-		list_move_tail(&prev->freezer.run_list,
-			       &rq->freezer.sched_entities);
-		#endif
+	/* need to reschedule and reset its runtime for the next time now */
+	fr_se->remaining_runtime = FREEZER_TIMESLICE;
+	list_rotate_left(&rq->freezer.sched_entities);
 	resched_curr(rq);
 }
 
