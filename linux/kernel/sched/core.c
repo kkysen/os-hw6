@@ -3245,7 +3245,7 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 	 */
 	if (unlikely(p->sched_reset_on_fork)) {
 		if (task_has_dl_policy(p) || task_has_rt_policy(p)) {
-			p->policy = SCHED_NORMAL;
+			p->policy = SCHED_FREEZER;
 			p->static_prio = NICE_TO_PRIO(0);
 			p->rt_priority = 0;
 		} else if (PRIO_TO_NICE(p->static_prio) < 0)
@@ -5584,7 +5584,7 @@ EXPORT_SYMBOL_GPL(sched_set_fifo_low);
 void sched_set_normal(struct task_struct *p, int nice)
 {
 	struct sched_attr attr = {
-		.sched_policy = SCHED_NORMAL,
+		.sched_policy = SCHED_FREEZER,
 		.sched_nice = nice,
 	};
 	WARN_ON_ONCE(sched_setattr_nocheck(p, &attr) != 0);
@@ -7343,7 +7343,7 @@ void normalize_rt_tasks(void)
 {
 	struct task_struct *g, *p;
 	struct sched_attr attr = {
-		.sched_policy = SCHED_NORMAL,
+		.sched_policy = SCHED_FREEZER,
 	};
 
 	read_lock(&tasklist_lock);
