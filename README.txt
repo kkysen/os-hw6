@@ -39,7 +39,34 @@ Answered the questions about jiffies and HZ.
 TODO
 
 ### Part 7
-TODO
+
+To set a process's scheduling policy to `SCHED_FREEZER`,
+we ran this program as the process to set to freezer:
+```shell
+❯ bash -c 'while true; do date; sleep 1; done'
+Sun 21 Nov 2021 04:02:08 PM EST
+Sun 21 Nov 2021 04:02:09 PM EST
+Sun 21 Nov 2021 04:02:10 PM EST
+...
+```
+Then we ran this to set it to freezer:
+```shell
+❯ ps aux | rg bash
+khyber       787  0.0  0.1  10332  7292 pts/0    Ss   15:57   0:00 -bash
+khyber       911  0.5  0.1  10704  7672 pts/1    Ss   16:00   0:00 -bash
+khyber      1397  0.2  0.0   6896  3540 pts/1    S+   16:02   0:00 bash -c while true; do date; sleep 1; done
+khyber      1426  0.0  0.1   8536  5760 pts/0    S+   16:02   0:00 rg bash
+
+❯ ./user/test/set-freezer/set-freezer 1397
+policy set to freezer for process 1397
+
+❯ ps -e --forest -o sched,policy,psr,pcpu,c,pid,user,cmd
+SCH POL PSR %CPU  C     PID USER     CMD
+...
+  7 #7    0  0.3  0    1397 khyber    |           \_ bash -c while true; do date; sleep 1;
+  7 #7    0  0.9  0    1818 khyber    |               \_ bash -c while true; do date; sleep 1;
+...
+```
 
 ### Part 8
 TODO
