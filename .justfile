@@ -624,7 +624,7 @@ watch-kernel-files *args:
         });
     }
 
-    async function watchKernelFile({outputFile, extraArgs}) {
+    async function watchKernelFile({outputFile, extraArgs = []}) {
         const {dir, base} = pathLib.parse(outputFile);
         const [cmdPath, depsPath] = ["cmd", "d"]
             .map(ext => pathLib.join(dir, `.${base}.${ext}`))
@@ -654,12 +654,12 @@ watch-kernel-files *args:
             });
             const {code, signal} = await child.status();
             if (signal) {
-                console.warn(`killed by signal ${signal}`);
+                console.warn(`killed by signal ${signal}: ${outputFile}`);
             }
             if (code !== 0) {
-                console.warn(`failed with status ${code}`);
+                console.warn(`failed with status ${code}: ${outputFile}`);
             } else {
-                console.log(`succeeded`);
+                console.log(`succeeded: ${outputFile}`);
             }
             console.log();
         }
