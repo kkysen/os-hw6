@@ -36,10 +36,13 @@ Part 4 is completed with the results of our experiment and the original kernel b
 Answered the questions about jiffies and HZ.
 
 ### Part 6
-TODO
+Completed part 6. We added the functions in kernel/sched/freezer.c and included the data
+structures in multiple files, including adding some header files and editing sched.h.
 
 ### Part 7
-TODO
+We implemented the functions in the freezer.c folder. Some of these functions did 
+not do anything because freezer is a round-robin and we are reassigning cpus. Our
+script works to change our processes to the freezer scheduler.
 
 ### Part 8
 TODO
