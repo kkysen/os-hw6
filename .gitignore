@@ -3,6 +3,9 @@ compile_commands.json
 .vscode/
 .gdb_history
 README.md
+.jump/
+.git-*/
+trace.dat
 
 # Common editor swap files
 .*.swp
