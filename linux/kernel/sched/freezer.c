@@ -12,7 +12,7 @@
 
 #define todo() todo_message("")
 
-#define p(fmt, ...) pr_info("%s:%d:%s: " fmt "\n", __FILE__, __LINE__, __func__, __VA_ARGS__)
+#define p(fmt, ...) pr_info("[cpu %d] %s:%d:%30s: " fmt "\n", get_cpu(), __FILE__, __LINE__, __func__, __VA_ARGS__)
 
 #define start() p("%s", "start")
 #define end() p("%s", "end")
@@ -61,8 +61,8 @@ static void enqueue_task_freezer(struct rq *rq, struct task_struct *p,
 	/* run_list should always be initialized */
 	pnr(rq);
 	prr(&p->freezer);
-	p->freezer.remaining_runtime = FREEZER_TIMESLICE;
-	prr(&p->freezer);
+	// p->freezer.remaining_runtime = FREEZER_TIMESLICE;
+	// prr(&p->freezer);
 	p("enqueue to cpu %d [%d] %s (%llu user, %llu kernel)", cpu_of(rq), p->pid, p->comm, p->utime, p->stime);
 	list_add_tail(&p->freezer.run_list, &rq->freezer.sched_entities);
 	rq->freezer.nr_running++;
@@ -138,7 +138,7 @@ static void set_next_task_freezer(struct rq *rq, struct task_struct *p,
 				  bool first __always_unused)
 {
 	start();
-	p("set [%d] %s (%llu user, %llu kernel)", p->pid, p->comm, p->utime, p->stime);
+	p("set on cpu %d [%d] %s (%llu user, %llu kernel)", cpu_of(rq), p->pid, p->comm, p->utime, p->stime);
 	p->se.exec_start = rq_clock_task(rq);
 	end();
 }
@@ -155,7 +155,7 @@ static struct task_struct *pick_next_task_freezer(struct rq *rq)
 	fr_rq = &rq->freezer;
 	fr_se = pick_next_freezer_entity(fr_rq);
 	p = freezer_task_of(fr_se);
-	p("picked [%d] %s (%llu user, %llu kernel)", p->pid, p->comm, p->utime, p->stime);
+	p("picked on cpu %d [%d] %s (%llu user, %llu kernel)", cpu_of(rq), p->pid, p->comm, p->utime, p->stime);
 	set_next_task_freezer(rq, p, true);
 	end();
 	return p;
