@@ -2,6 +2,7 @@ set shell := ["bash", "-c"]
 
 hw := "6"
 n_proc := `nproc`
+just_dir := justfile_directory()
 cwd := invocation_directory()
 
 default:
@@ -714,7 +715,7 @@ watch-kernel-files *args:
             .map(s => s.split(" "))
             ;
 
-        process.chdir(pathLib.join("{{justfile_directory()}}", "linux"));
+        process.chdir(pathLib.join("{{just_dir}}", "linux"));
         await Promise.all(outputFiles.map(outputFile => watchKernelFile({
             outputFile,
             extraArgs,
