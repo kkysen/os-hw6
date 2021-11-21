@@ -6,13 +6,7 @@
 
 #pragma GCC diagnostic pop
 
-#define todo_message(message)                                                  \
-	pr_err("TODO%s%s at %s:%d:%s\n", message[0] == 0 ? "" : ": ", message, \
-	       __FILE__, __LINE__, __func__)
-
-#define todo() todo_message("")
-
-#define p(fmt, ...) pr_info("[cpu %d] %s:%d:%30s: " fmt "\n", get_cpu(), __FILE__, __LINE__, __func__, __VA_ARGS__)
+#define p(fmt, ...) pr_info("[cpu %d] %s:%03d:%-25s: " fmt "\n", get_cpu(), __FILE__, __LINE__, __func__, __VA_ARGS__)
 
 #define start() p("%s", "start")
 #define end() p("%s", "end")
