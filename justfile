@@ -2,6 +2,7 @@ set shell := ["bash", "-c"]
 
 hw := "6"
 n_proc := `nproc`
+cwd := invocation_directory()
 
 default:
     just --list --unsorted
@@ -164,7 +165,7 @@ first-commit:
     git rev-list --max-parents=0 HEAD
 
 modified-files *args:
-    git diff --name-only {{args}}
+    cd "{{cwd}}" && git diff --name-only {{args}}
 
 # clang-format formats some stuff wrong, so re-format it
 # specifically for each macros
@@ -213,7 +214,7 @@ _fmt *args:
 fmt *args: _clang_format (_fmt args)
 
 entire-diff *files:
-    git diff "$(just first-commit)" -- {{files}}
+    cd "{{cwd}}" && git diff "$(just first-commit)" -- {{files}}
 
 pre-commit-fast: fmt check-patch
 
@@ -347,8 +348,11 @@ unload-mod-by-path path_=default_mod_path: (unload-mod file_stem(path_))
 check_patch_ignores_common := "FILE_PATH_CHANGES,SPDX_LICENSE_TAG,MISSING_EOF_NEWLINE"
 check_patch_ignores_hw := "EXPORT_SYMBOL,ENOSYS,AVOID_EXTERNS,LINE_CONTINUATIONS,AVOID_BUG"
 
+raw-check-patch *args:
+    ./linux/scripts/checkpatch.pl --max-line-length=80 --ignore "{{check_patch_ignores_common}},{{check_patch_ignores_hw}}" {{args}}
+
 check-patch *files:
-    just entire-diff {{files}} | ./linux/scripts/checkpatch.pl --ignore "{{check_patch_ignores_common}},{{check_patch_ignores_hw}}"
+    cd "{{cwd}}" && just entire-diff {{files}} | just raw-check-patch
 
 filter-exec:
     #!/usr/bin/env node
