@@ -2,6 +2,8 @@ set shell := ["bash", "-c"]
 
 hw := "6"
 n_proc := `nproc`
+just_dir := justfile_directory()
+cwd := invocation_directory()
 
 default:
     just --list --unsorted
@@ -74,7 +76,9 @@ make-non-kernel *args: (make-user args)
 
 make-kernel *args: (make-in "linux" args)
 
-make-freezer *args: (make-kernel "kernel/sched/freezer.o")
+freezer_o := "kernel/sched/freezer.o"
+
+make-freezer *args: (make-kernel freezer_o)
 
 make-sched *args: (make-kernel "kernel/sched/")
 
@@ -162,7 +166,7 @@ first-commit:
     git rev-list --max-parents=0 HEAD
 
 modified-files *args:
-    git diff --name-only {{args}}
+    cd "{{cwd}}" && git diff --name-only {{args}}
 
 # clang-format formats some stuff wrong, so re-format it
 # specifically for each macros
@@ -210,8 +214,8 @@ _fmt *args:
 
 fmt *args: _clang_format (_fmt args)
 
-entire-diff *args:
-    git diff "$(just first-commit)" {{args}}
+entire-diff *files:
+    cd "{{cwd}}" && git diff "$(just first-commit)" -- {{files}}
 
 pre-commit-fast: fmt check-patch
 
@@ -342,8 +346,14 @@ unload-mod name=file_stem(default_mod_path):
 # `path` is `path_` instead to appease checkpatch's repeated word warning
 unload-mod-by-path path_=default_mod_path: (unload-mod file_stem(path_))
 
-check-patch:
-    ./run_checkpatch.sh
+check_patch_ignores_common := "FILE_PATH_CHANGES,SPDX_LICENSE_TAG,MISSING_EOF_NEWLINE"
+check_patch_ignores_hw := "EXPORT_SYMBOL,ENOSYS,AVOID_EXTERNS,LINE_CONTINUATIONS,AVOID_BUG"
+
+raw-check-patch *args:
+    ./linux/scripts/checkpatch.pl --max-line-length=80 --ignore "{{check_patch_ignores_common}},{{check_patch_ignores_hw}}" {{args}}
+
+check-patch *files:
+    cd "{{cwd}}" && just entire-diff {{files}} | just raw-check-patch
 
 filter-exec:
     #!/usr/bin/env node
@@ -524,12 +534,13 @@ trace-with tracer_name cpu *args: trace-stop (tracer tracer_name) trace-start &&
 trace *args: (trace-with "function_graph" "" args)
 
 jiffies:
-    ./user/test/jiffies.sh
+    ./user/test/jiffies/jiffies.sh
 
 split-procs:
-    ./user/test/split-procs.sh
+    ./user/test/split-procs/split-procs.sh
 
-watch-kernel-files output_files:
+# args = files -- extra args
+watch-kernel-files *args:
     #!/usr/bin/env node
     const fsp = require("fs/promises");
     const pathLib = require("path");
@@ -596,6 +607,8 @@ watch-kernel-files output_files:
 
     async function spawn(options) {
         const {args} = options;
+        // console.log(args.join(" "));
+        console.log([...args.slice(0, 5), "...", ...args.slice(-5)].join(" "));
         const child = childProcess.spawn(args[0], args.slice(1), options);
         child.wait = () => new Promise((resolve, reject) => {
             child.on("exit", (code, signal) => {
@@ -611,7 +624,7 @@ watch-kernel-files output_files:
         });
     }
 
-    async function watchKernelFile(outputFile) {
+    async function watchKernelFile({outputFile, extraArgs}) {
         const {dir, base} = pathLib.parse(outputFile);
         const promises = ["cmd", "d"]
             .map(ext => pathLib.join(dir, `.${base}.${ext}`))
@@ -626,10 +639,21 @@ watch-kernel-files output_files:
         const cmdArgs = cmds.def.cmd(outputFile);
 
         async function runCommand() {
-            console.log(cmdArgs.value);
+            // console.log(cmdArgs.value);
+            console.log();
+            console.log(`rebuilding: ${outputFile}`);
             const child = await spawn({
-                args: cmdArgs.values,
+                args: [
+                    ...cmdArgs.values,
+                    ...extraArgs.map(arg => {
+                        if (arg === "{}") {
+                            return cmds.def.source(outputFile).value;
+                        }
+                        return arg;
+                    }),
+                ],
                 stdio: ['inherit', 'inherit', 'inherit'],
+                shell: true,
             });
             const {code, signal} = await child.status();
             if (signal) {
@@ -640,6 +664,7 @@ watch-kernel-files output_files:
             } else {
                 console.log(`succeeded`);
             }
+            console.log();
         }
 
         const debounceTime = 100; // ms
@@ -681,15 +706,25 @@ watch-kernel-files output_files:
 
         depPaths.forEach(depPath => fs.watch(depPath, {}, onEvent));
         console.log(`watching for changes to rebuild: ${outputFile}`);
+        currentCommand = run();
     }
 
     async function main() {
-        const outputFiles = "{{output_files}}".split(" ");
-        process.chdir(pathLib.join("{{justfile_directory()}}", "linux"));
-        await Promise.all(outputFiles.map(file => watchKernelFile(file)));
+        const [outputFiles, extraArgs] = "{{args}}"
+            .split(" -- ")
+            .map(s => s.split(" "))
+            ;
+
+        process.chdir(pathLib.join("{{just_dir}}", "linux"));
+        await Promise.all(outputFiles.map(outputFile => watchKernelFile({
+            outputFile,
+            extraArgs,
+        })));
     }
 
     main().catch(e => {
         console.error(e);
         process.exit(1);
     });
+
+watch-freezer *args: (watch-kernel-files freezer_o "--" args)
