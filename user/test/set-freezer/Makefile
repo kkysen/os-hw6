@@ -1,16 +1,14 @@
 CC = gcc
-CXX = g++
 
 INCLUDES =
 
-CFLAGS = -g -Wall $(INCLUDES)
-CXXFLAGS = -g -Wall $(INCLUDES)
+CFLAGS = -std=c11 -g -Wall -Werror -Wextra $(INCLUDES)
 
 LDFLAGS = -g
 
 LDLIBS =
 
-set-freezer:
+set-freezer: set-freezer.o
 
 set-freezer.o: set-freezer.c
 
@@ -19,4 +17,4 @@ clean:
 	rm -f *.o a.out core* set-freezer
 
 .PHONY: all
-	all: clean main
+all: clean main
