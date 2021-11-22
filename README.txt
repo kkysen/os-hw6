@@ -68,5 +68,9 @@ SCH POL PSR %CPU  C     PID USER     CMD
 ...
 ```
 
+After setting the scheduler to freezer,
+the sleep and date loop kept going, but much slower.
+Setting CPU bound processes to use freezer, like `yes > /dev/null`, also worked.
+
 ### Part 8
 TODO
