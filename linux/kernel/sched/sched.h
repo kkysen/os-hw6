@@ -11,6 +11,7 @@
 #include <linux/sched/cputime.h>
 #include <linux/sched/deadline.h>
 #include <linux/sched/debug.h>
+#include <linux/sched/freezer.h>
 #include <linux/sched/hotplug.h>
 #include <linux/sched/idle.h>
 #include <linux/sched/init.h>
@@ -606,6 +607,13 @@ struct cfs_rq {
 #endif /* CONFIG_FAIR_GROUP_SCHED */
 };
 
+struct freezer_rq {
+	size_t nr_running;
+	struct list_head sched_entities; /* `sched_freezer_entity`s */
+	spinlock_t lock;
+	u64 runtime;
+};
+
 static inline int rt_bandwidth_enabled(void)
 {
 	return sysctl_sched_rt_runtime >= 0;
@@ -751,7 +759,6 @@ static inline long se_weight(struct sched_entity *se)
 {
 	return scale_load_down(se->load.weight);
 }
-
 
 static inline bool sched_asym_prefer(int a, int b)
 {
@@ -930,6 +937,7 @@ struct rq {
 #endif
 
 	struct cfs_rq		cfs;
+	struct freezer_rq		freezer;
 	struct rt_rq		rt;
 	struct dl_rq		dl;
 
@@ -1867,6 +1875,7 @@ extern const struct sched_class dl_sched_class;
 extern const struct sched_class rt_sched_class;
 extern const struct sched_class fair_sched_class;
 extern const struct sched_class idle_sched_class;
+extern const struct sched_class freezer_sched_class;
 
 static inline bool sched_stop_runnable(struct rq *rq)
 {
@@ -1934,6 +1943,7 @@ extern void update_max_interval(void);
 
 extern void init_sched_dl_class(void);
 extern void init_sched_rt_class(void);
+extern void init_sched_freezer_class(void);
 extern void init_sched_fair_class(void);
 
 extern void reweight_task(struct task_struct *p, int prio);
@@ -2266,9 +2276,12 @@ extern struct sched_entity *__pick_last_entity(struct cfs_rq *cfs_rq);
 extern bool sched_debug_enabled;
 
 extern void print_cfs_stats(struct seq_file *m, int cpu);
+extern void print_freezer_stats(struct seq_file *m, int cpu);
 extern void print_rt_stats(struct seq_file *m, int cpu);
 extern void print_dl_stats(struct seq_file *m, int cpu);
 extern void print_cfs_rq(struct seq_file *m, int cpu, struct cfs_rq *cfs_rq);
+extern void print_freezer_rq(struct seq_file *m, int cpu,
+			     struct freezer_rq *freezer_rq);
 extern void print_rt_rq(struct seq_file *m, int cpu, struct rt_rq *rt_rq);
 extern void print_dl_rq(struct seq_file *m, int cpu, struct dl_rq *dl_rq);
 #ifdef CONFIG_NUMA_BALANCING
@@ -2281,6 +2294,7 @@ print_numa_stats(struct seq_file *m, int node, unsigned long tsf,
 #endif /* CONFIG_SCHED_DEBUG */
 
 extern void init_cfs_rq(struct cfs_rq *cfs_rq);
+extern void init_freezer_rq(struct freezer_rq *freezer_rq);
 extern void init_rt_rq(struct rt_rq *rt_rq);
 extern void init_dl_rq(struct dl_rq *dl_rq);
 

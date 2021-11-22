@@ -5,6 +5,7 @@
 #include <linux/sched.h>
 #include <linux/sched/sysctl.h>
 #include <linux/sched/rt.h>
+#include <linux/sched/freezer.h>
 #include <linux/sched/task.h>
 #include <linux/init.h>
 #include <linux/fs.h>
