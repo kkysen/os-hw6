@@ -5290,7 +5290,7 @@ recheck:
 		if (dl_policy(policy))
 			return -EPERM;
 
-		if (freezer(policy) && policy != p->policy)
+		if (freezer_policy(policy) && policy != p->policy)
 			return -EPERM;
 
 		/*
