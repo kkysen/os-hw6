@@ -23,11 +23,9 @@ void __init init_sched_freezer_class(void)
 
 void init_freezer_rq(struct freezer_rq *fr_rq)
 {
-	start();
 	fr_rq->nr_running = 0;
 	INIT_LIST_HEAD(&fr_rq->sched_entities);
 	fr_rq->runtime = 0;
-	end();
 }
 
 void init_sched_freezer_entity(struct sched_freezer_entity *fr_se)
@@ -54,21 +52,14 @@ static void enqueue_task_freezer(struct rq *rq, struct task_struct *p,
 	struct freezer_rq *fr_rq;
 	struct sched_freezer_entity *fr_se;
 
-	start();
 	fr_rq = &rq->freezer;
 	fr_se = &p->freezer;
 	if (fr_se->on_rq)
 		return;
 	fr_se->on_rq = true;
-	pnr(rq);
-	prr(fr_se);
-	p("enqueue to cpu %d [%d] %s (%llu user, %llu kernel)", cpu_of(rq),
-	  p->pid, p->comm, p->utime, p->stime);
 	INIT_LIST_HEAD(&fr_se->run_list);
 	list_add_tail(&fr_se->run_list, &fr_rq->sched_entities);
 	fr_rq->nr_running++;
-	pnr(rq);
-	end();
 }
 
 static void dequeue_task_freezer(struct rq *rq, struct task_struct *p,
@@ -77,20 +68,14 @@ static void dequeue_task_freezer(struct rq *rq, struct task_struct *p,
 	struct freezer_rq *fr_rq;
 	struct sched_freezer_entity *fr_se;
 
-	start();
 	fr_rq = &rq->freezer;
 	fr_se = &p->freezer;
 	if (!fr_se->on_rq)
 		return;
 	fr_se->on_rq = false;
-	pnr(rq);
-	p("dequeue from cpu %d [%d] %s (%llu user, %llu kernel)", cpu_of(rq),
-	  p->pid, p->comm, p->utime, p->stime);
 	/* leave in initialized state */
 	list_del_init(&fr_se->run_list);
 	fr_rq->nr_running--;
-	pnr(rq);
-	end();
 }
 
 static void yield_task_freezer(struct rq *rq)
@@ -98,15 +83,11 @@ static void yield_task_freezer(struct rq *rq)
 	struct task_struct *p;
 	struct sched_freezer_entity *fr_se;
 
-	start();
 	p = rq->curr;
 	fr_se = &p->freezer;
 	if (!fr_se->on_rq)
 		return;
-	p("yield on cpu %d [%d] %s (%llu user, %llu kernel)", cpu_of(rq),
-	  p->pid, p->comm, p->utime, p->stime);
 	list_rotate_left(&rq->freezer.sched_entities);
-	end();
 }
 
 static bool yield_to_task_freezer(struct rq *rq, struct task_struct *p)
@@ -114,13 +95,9 @@ static bool yield_to_task_freezer(struct rq *rq, struct task_struct *p)
 	struct freezer_rq *fr_rq;
 	struct sched_freezer_entity *fr_se;
 
-	start();
 	fr_rq = &rq->freezer;
 	fr_se = &p->freezer;
 	yield_task_freezer(rq);
-	pnr(rq);
-	p("yield to on cpu %d [%d] %s (%llu user, %llu kernel)", cpu_of(rq),
-	  p->pid, p->comm, p->utime, p->stime);
 	if (fr_se->on_rq)
 		list_del_init(&fr_se->run_list);
 	list_add(&fr_se->run_list, &fr_rq->sched_entities);
@@ -128,8 +105,6 @@ static bool yield_to_task_freezer(struct rq *rq, struct task_struct *p)
 		fr_se->on_rq = true;
 		fr_rq->nr_running++;
 	}
-	pnr(rq);
-	end();
 	return true;
 }
 
@@ -164,11 +139,7 @@ pick_next_freezer_entity(struct freezer_rq *fr_rq)
 static void set_next_task_freezer(struct rq *rq, struct task_struct *p,
 				  bool first __always_unused)
 {
-	start();
-	p("set on cpu %d [%d] %s (%llu user, %llu kernel)", cpu_of(rq), p->pid,
-	  p->comm, p->utime, p->stime);
 	p->se.exec_start = rq_clock_task(rq);
-	end();
 }
 
 static struct task_struct *pick_next_task_freezer(struct rq *rq)
@@ -179,14 +150,10 @@ static struct task_struct *pick_next_task_freezer(struct rq *rq)
 
 	if (!sched_freezer_runnable(rq))
 		return NULL;
-	start();
 	fr_rq = &rq->freezer;
 	fr_se = pick_next_freezer_entity(fr_rq);
 	p = freezer_task_of(fr_se);
-	p("picked on cpu %d [%d] %s (%llu user, %llu kernel)", cpu_of(rq),
-	  p->pid, p->comm, p->utime, p->stime);
 	set_next_task_freezer(rq, p, true);
-	end();
 	return p;
 }
 
@@ -195,13 +162,11 @@ static void put_prev_task_freezer(struct rq *rq, struct task_struct *prev)
 	struct freezer_rq *fr_rq;
 	struct sched_freezer_entity *fr_se;
 
-	start();
 	fr_rq = &rq->freezer;
 	fr_se = &prev->freezer;
 	if (!prev->on_rq)
 		return;
 	list_move_tail(&fr_se->run_list, &fr_rq->sched_entities);
-	end();
 }
 
 static void update_curr_freezer(struct rq *rq)
@@ -212,7 +177,6 @@ static void update_curr_freezer(struct rq *rq)
 	u64 now;
 	u64 delta_exec;
 
-	start();
 	fr_rq = &rq->freezer;
 	curr = rq->curr;
 	se = &curr->se;
@@ -230,7 +194,6 @@ static void update_curr_freezer(struct rq *rq)
 	fr_rq->runtime += delta_exec;
 	if (fr_rq->runtime > FREEZER_TIMESLICE)
 		resched_curr(rq);
-	end();
 }
 
 #ifdef CONFIG_SMP
@@ -252,7 +215,6 @@ static int select_task_rq_freezer(struct task_struct *p,
 	int cpu_with_min_tasks;
 	size_t min_tasks;
 
-	start();
 	cpu_with_min_tasks = task_cpu(p);
 	min_tasks = (size_t)-1; /* max */
 	for_each_possible_cpu(cpu) {
@@ -268,7 +230,6 @@ static int select_task_rq_freezer(struct task_struct *p,
 	}
 	p("chose cpu %d w/ %zu tasks for [%d] %s (%llu user, %llu kernel)",
 	  cpu_with_min_tasks, min_tasks, p->pid, p->comm, p->utime, p->stime);
-	end();
 	return cpu_with_min_tasks;
 }
 
@@ -315,25 +276,18 @@ static void task_tick_freezer(struct rq *rq, struct task_struct *p,
 	 */
 	struct sched_freezer_entity *fr_se;
 
-	start();
 	fr_se = &p->freezer;
 	update_curr_freezer(rq);
 	if (p->policy != SCHED_FREEZER || !fr_se->on_rq) {
-		p("%s", "different policy or not on rq");
-		end();
 		return;
 	}
 	if (--fr_se->remaining_runtime > 0) {
-		prr(fr_se);
-		end();
 		return;
 	}
-	p("%s", "reset time slice");
 	/* need to reschedule and reset its runtime for the next time now */
 	fr_se->remaining_runtime = FREEZER_TIMESLICE;
 	list_rotate_left(&rq->freezer.sched_entities);
 	resched_curr(rq);
-	end();
 }
 
 static void task_fork_freezer(struct task_struct *p __always_unused)
@@ -354,14 +308,12 @@ static void switched_from_freezer(struct rq *rq __always_unused,
 
 static void switched_to_freezer(struct rq *rq, struct task_struct *task)
 {
-	start();
 	if (!task_on_rq_queued(task))
 		return;
 	if (task_current(rq, task))
 		resched_curr(rq);
 	else
 		check_preempt_curr_freezer(rq, task, 0);
-	end();
 }
 
 static void prio_changed_freezer(struct rq *this_rq __always_unused,
@@ -374,8 +326,6 @@ static void prio_changed_freezer(struct rq *this_rq __always_unused,
 static unsigned int get_rr_interval_freezer(struct rq *rq __always_unused,
 					    struct task_struct *task)
 {
-	start();
-	end();
 	if (task->policy == SCHED_FREEZER)
 		return FREEZER_TIMESLICE;
 	return 0;
