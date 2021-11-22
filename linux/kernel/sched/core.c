@@ -2404,7 +2404,8 @@ void sched_set_stop_task(int cpu, struct task_struct *stop)
 #else
 
 static inline int __set_cpus_allowed_ptr(struct task_struct *p,
-					 const struct cpumask *new_mask, bool check)
+					 cons
+					 t struct cpumask *new_mask, bool check)
 {
 	return set_cpus_allowed_ptr(p, new_mask);
 }
@@ -3090,6 +3091,8 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
 	p->rt.on_rq		= 0;
 	p->rt.on_list		= 0;
 
+	init_sched_freezer_entity(&p->freezer);
+
 #ifdef CONFIG_PREEMPT_NOTIFIERS
 	INIT_HLIST_HEAD(&p->preempt_notifiers);
 #endif
@@ -3262,6 +3265,8 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 		return -EAGAIN;
 	else if (rt_prio(p->prio))
 		p->sched_class = &rt_sched_class;
+	else if (freezer_policy(p->policy))
+		p->sched_class = &freezer_sched_class;
 	else
 		p->sched_class = &fair_sched_class;
 
@@ -5187,6 +5192,8 @@ static void __setscheduler(struct rq *rq, struct task_struct *p,
 		p->sched_class = &dl_sched_class;
 	else if (rt_prio(p->prio))
 		p->sched_class = &rt_sched_class;
+	else if (freezer_policy(p->policy))
+		p->sched_class = &freezer_sched_class;
 	else
 		p->sched_class = &fair_sched_class;
 }
@@ -5281,6 +5288,9 @@ recheck:
 		  * or reduce their runtime (both ways reducing utilization)
 		  */
 		if (dl_policy(policy))
+			return -EPERM;
+
+		if (freezer_policy(policy) && policy != p->policy)
 			return -EPERM;
 
 		/*
@@ -7060,8 +7070,9 @@ void __init sched_init(void)
 
 	/* Make sure the linker didn't screw up */
 	BUG_ON(&idle_sched_class + 1 != &fair_sched_class ||
-	       &fair_sched_class + 1 != &rt_sched_class ||
-	       &rt_sched_class + 1   != &dl_sched_class);
+	       &fair_sched_class + 1 != &freezer_sched_class ||
+		   &freezer_sched_class + 1 != &rt_sched_class ||
+	       &rt_sched_class + 1 != &dl_sched_class);
 #ifdef CONFIG_SMP
 	BUG_ON(&dl_sched_class + 1 != &stop_sched_class);
 #endif
@@ -7135,6 +7146,7 @@ void __init sched_init(void)
 		rq->calc_load_active = 0;
 		rq->calc_load_update = jiffies + LOAD_FREQ;
 		init_cfs_rq(&rq->cfs);
+		init_freezer_rq(&rq->freezer);
 		init_rt_rq(&rq->rt);
 		init_dl_rq(&rq->dl);
 #ifdef CONFIG_FAIR_GROUP_SCHED
@@ -7216,6 +7228,7 @@ void __init sched_init(void)
 	idle_thread_set_boot_cpu();
 #endif
 	init_sched_fair_class();
+	init_sched_freezer_class();
 
 	init_schedstats();
 

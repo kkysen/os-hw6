@@ -21,7 +21,9 @@ install-program-dependencies:
         libelf-dev \
         libssl-dev \
         libncurses-dev \
-        dwarves
+        dwarves \
+        rsync \
+        trace-cmd
     command -v cargo > /dev/null || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     cargo install cargo-quickinstall
     cargo quickinstall just
@@ -501,37 +503,8 @@ rename-branch old_name new_name:
     git push origin --delete "{{old_name}}"
     git checkout -
 
-eval code:
-    eval "{{code}}"
-
-_read_or_write_file path value="": (eval if value == "" { "cat '" + path + "'" } else { "echo '" + value + "' > '" + path + "'" })
-
-_debug_fs path value="": (_read_or_write_file join("/sys/kernel/debug", path) value)
-
-_ftrace path value="": (_debug_fs join("tracing", path) value)
-
-tracers-available: (_ftrace "available_tracers")
-
-tracer name="": (_ftrace "current_tracer" name)
-
-_trace_set_on on: (_ftrace "tracing_on" on)
-
-trace-start: (_trace_set_on "1")
-
-trace-stop: (_trace_set_on "0")
-
-trace-mark message: (_ftrace "trace_marker" message)
-
-trace-buffer-size size_kb="": (_ftrace "buffer_size_kb" size_kb)
-
-trace-view cpu="": (_ftrace join(if cpu == "" { "." } else { "per_cpu/cpu" + cpu }, "trace"))
-
-trace-with tracer_name cpu *args: trace-stop (tracer tracer_name) trace-start && trace-stop (tracer "nop") (trace-view cpu)
-    just trace-mark "starting: {{args}}"
-    {{args}}
-    just trace-mark "finished: {{args}}"
-
-trace *args: (trace-with "function_graph" "" args)
+trace *args:
+    sudo trace-cmd {{args}}
 
 jiffies:
     ./user/test/jiffies/jiffies.sh
@@ -745,3 +718,12 @@ watch-kernel-files *args:
     });
 
 watch-freezer *args: (watch-kernel-files freezer_o "--" args)
+
+make-set-freezer *args: (make-in "user/test/set-freezer" args)
+
+set-freezer pid: make-set-freezer
+    sudo ./user/test/set-freezer/set-freezer {{pid}}
+
+patch-grub:
+    sudo patch --input patch/grub.patch --unified --backup --forward /etc/default/grub
+    sudo update-grub
