@@ -47,3 +47,8 @@ script works to change our processes to the freezer scheduler.
 ### Part 8
 We changed the `init_task.c`, `kthread.c`, and `core.c` files to reflect that
 `SCHED_FREEZER` is now the default scheduler instead of `SCHED_NORMAL`.
+To test both parts 7 and 8 we ran ps commands to see the schedulers of programs
+that were regular programs as well as that forked into multiple processes.
+We also had print statements to check the functions that were running to
+verify the round robin functionality. We were not able to complete any
+further/more intricate testing.
