@@ -45,4 +45,5 @@ not do anything because freezer is a round-robin and we are reassigning cpus. Ou
 script works to change our processes to the freezer scheduler.
 
 ### Part 8
-TODO
+We changed the init_task.c, kthread.c, and core.c files to reflect that
+SCHED_FREEZER is now the default scheduler instead of the normal one.
