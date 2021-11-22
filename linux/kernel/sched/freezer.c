@@ -115,10 +115,6 @@ static struct task_struct *freezer_task_of(struct sched_freezer_entity *fr_se)
 	return container_of(fr_se, struct task_struct, freezer);
 }
 
-// static struct task_struct *freezer_rq_curr_task(struct rq *rq) {
-
-// }
-
 static struct sched_freezer_entity *
 pick_next_freezer_entity(struct freezer_rq *fr_rq)
 {
