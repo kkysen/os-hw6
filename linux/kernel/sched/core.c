@@ -5290,6 +5290,9 @@ recheck:
 		if (dl_policy(policy))
 			return -EPERM;
 
+		if (freezer_policy(policy) && policy != p->policy)
+			return -EPERM;
+
 		/*
 		 * Treat SCHED_IDLE as nice 20. Only allow a switch to
 		 * SCHED_NORMAL if the RLIMIT_NICE would normally permit it.
