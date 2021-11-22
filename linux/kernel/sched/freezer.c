@@ -9,6 +9,7 @@
 #define p(fmt, ...)                                                            \
 	pr_info("[cpu %d] %s:%03d:%-25s: " fmt "\n", get_cpu(), __FILE__,      \
 		__LINE__, __func__, __VA_ARGS__)
+#define p(fmt, ...)
 
 #define start() p("%s", "start")
 #define end() p("%s", "end")
