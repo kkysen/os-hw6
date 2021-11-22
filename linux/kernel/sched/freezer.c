@@ -62,10 +62,13 @@ static void enqueue_task_freezer(struct rq *rq, struct task_struct *p,
 	pnr(rq);
 	prr(&p->freezer);
 	p->freezer.remaining_runtime = FREEZER_TIMESLICE;
-	prr(&p->freezer);
-	p("enqueue to cpu %d [%d] %s (%llu user, %llu kernel)", cpu_of(rq), p->pid, p->comm, p->utime, p->stime);
-	list_add_tail(&p->freezer.run_list, &rq->freezer.sched_entities);
-	rq->freezer.nr_running++;
+	if(!p->freezer.on_rq){
+		prr(&p->freezer);
+		p("enqueue to cpu %d [%d] %s (%llu user, %llu kernel)", cpu_of(rq), p->pid, p->comm, p->utime, p->stime);
+		list_add_tail(&p->freezer.run_list, &rq->freezer.sched_entities);
+		rq->freezer.nr_running++;
+		p->freezer.on_rq = 1;
+	}
 	pnr(rq);
 	end();
 }
@@ -76,9 +79,12 @@ static void dequeue_task_freezer(struct rq *rq, struct task_struct *p,
 	start();
 	/* leave in initialized state */
 	pnr(rq);
-	p("dequeue from cpu %d [%d] %s (%llu user, %llu kernel)", cpu_of(rq), p->pid, p->comm, p->utime, p->stime);
-	list_del_init(&p->freezer.run_list);
-	rq->freezer.nr_running--;
+	if(flags){
+		p("dequeue from cpu %d [%d] %s (%llu user, %llu kernel)", cpu_of(rq), p->pid, p->comm, p->utime, p->stime);
+		list_del_init(&p->freezer.run_list);
+		rq->freezer.nr_running--;
+		p->freezer.on_rq = 0;
+	}
 	pnr(rq);
 	end();
 }
@@ -156,7 +162,6 @@ static struct task_struct *pick_next_task_freezer(struct rq *rq)
 	fr_se = pick_next_freezer_entity(fr_rq);
 	p = freezer_task_of(fr_se);
 	p("picked [%d] %s (%llu user, %llu kernel)", p->pid, p->comm, p->utime, p->stime);
-	set_next_task_freezer(rq, p, true);
 	end();
 	return p;
 }
@@ -164,7 +169,9 @@ static struct task_struct *pick_next_task_freezer(struct rq *rq)
 static void put_prev_task_freezer(struct rq *rq, struct task_struct *prev)
 {
 	start();
-	list_move_tail(&prev->freezer.run_list, &rq->freezer.sched_entities);
+	if(prev->on_rq){
+		list_move_tail(&prev->freezer.run_list, &rq->freezer.sched_entities);
+	}
 	end();
 }
 
@@ -294,8 +301,10 @@ static void task_tick_freezer(struct rq *rq, struct task_struct *p,
 	p("%s", "reset time slice");
 	/* need to reschedule and reset its runtime for the next time now */
 	fr_se->remaining_runtime = FREEZER_TIMESLICE;
-	list_rotate_left(&rq->freezer.sched_entities);
-	resched_curr(rq);
+	if(p->on_rq){
+		list_rotate_left(&rq->freezer.sched_entities);
+		resched_curr(rq);
+	}
 	end();
 }
 
