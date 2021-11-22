@@ -383,7 +383,7 @@ struct task_struct *__kthread_create_on_node(int (*threadfn)(void *data),
 		 * root may have changed our (kthreadd's) priority or CPU mask.
 		 * The kernel thread should not inherit these properties.
 		 */
-		sched_setscheduler_nocheck(task, SCHED_FREEZER, &param);
+		sched_setscheduler_nocheck(task, SCHED_NORMAL, &param);
 		set_cpus_allowed_ptr(task,
 				     housekeeping_cpumask(HK_FLAG_KTHREAD));
 	}
@@ -872,7 +872,7 @@ static void kthread_insert_work(struct kthread_worker *worker,
  *
  * Queue @work to work processor @task for async execution.  @task
  * must have been created with kthread_worker_create().  Returns %true
- * if @work was successfully queued, %false if it was already pending.
+ * if @work was successfully queued, false if it was already pending.
  *
  * Reinitialize the work if it needs to be used by another worker.
  * For example, when the worker was stopped and started again.

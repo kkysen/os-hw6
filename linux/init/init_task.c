@@ -5,7 +5,6 @@
 #include <linux/sched.h>
 #include <linux/sched/sysctl.h>
 #include <linux/sched/rt.h>
-#include <linux/sched/freezer.h>
 #include <linux/sched/task.h>
 #include <linux/init.h>
 #include <linux/fs.h>
@@ -79,7 +78,7 @@ struct task_struct init_task
 	.prio		= MAX_PRIO - 20,
 	.static_prio	= MAX_PRIO - 20,
 	.normal_prio	= MAX_PRIO - 20,
-	.policy		= SCHED_FREEZER,
+	.policy		= SCHED_NORMAL,
 	.cpus_ptr	= &init_task.cpus_mask,
 	.cpus_mask	= CPU_MASK_ALL,
 	.nr_cpus_allowed= NR_CPUS,
@@ -90,10 +89,6 @@ struct task_struct init_task
 	},
 	.se		= {
 		.group_node 	= LIST_HEAD_INIT(init_task.se.group_node),
-	},
-	.freezer		= {
-		.run_list	= LIST_HEAD_INIT(init_task.freezer.run_list),
-		.remaining_runtime	= FREEZER_TIMESLICE,
 	},
 	.rt		= {
 		.run_list	= LIST_HEAD_INIT(init_task.rt.run_list),
