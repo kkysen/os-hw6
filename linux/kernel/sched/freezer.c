@@ -30,7 +30,6 @@ void init_freezer_rq(struct freezer_rq *fr_rq)
 	start();
 	fr_rq->nr_running = 0;
 	INIT_LIST_HEAD(&fr_rq->sched_entities);
-	spin_lock_init(&fr_rq->lock);
 	fr_rq->runtime = 0;
 	end();
 }
