@@ -34,6 +34,7 @@ void init_sched_freezer_entity(struct sched_freezer_entity *fr_se)
 	// start();
 	INIT_LIST_HEAD(&fr_se->run_list);
 	fr_se->remaining_runtime = FREEZER_TIMESLICE;
+	fr_se->on_rq = 0;
 	// end();
 }
 
@@ -58,8 +59,11 @@ static void enqueue_task_freezer(struct rq *rq, struct task_struct *p,
 	// p->freezer.remaining_runtime = FREEZER_TIMESLICE;
 	// prr(&p->freezer);
 	p("enqueue to cpu %d [%d] %s (%llu user, %llu kernel)", cpu_of(rq), p->pid, p->comm, p->utime, p->stime);
-	list_add_tail(&p->freezer.run_list, &rq->freezer.sched_entities);
-	rq->freezer.nr_running++;
+	if(p->freezer.on_rq == 0){
+		list_add_tail(&p->freezer.run_list, &rq->freezer.sched_entities);
+		rq->freezer.nr_running++;
+		p->freezer.on_rq = 1;
+	}
 	pnr(rq);
 	end();
 }
@@ -71,8 +75,11 @@ static void dequeue_task_freezer(struct rq *rq, struct task_struct *p,
 	/* leave in initialized state */
 	pnr(rq);
 	p("dequeue from cpu %d [%d] %s (%llu user, %llu kernel)", cpu_of(rq), p->pid, p->comm, p->utime, p->stime);
-	list_del_init(&p->freezer.run_list);
-	rq->freezer.nr_running--;
+	if(p->freezer.on_rq == 1){
+		list_del_init(&p->freezer.run_list);
+		rq->freezer.nr_running--;
+		p->freezer.on_rq = 0;
+	}
 	pnr(rq);
 	end();
 }
@@ -158,7 +165,9 @@ static struct task_struct *pick_next_task_freezer(struct rq *rq)
 static void put_prev_task_freezer(struct rq *rq, struct task_struct *prev)
 {
 	start();
-	list_move_tail(&prev->freezer.run_list, &rq->freezer.sched_entities);
+	if(prev->freezer.on_rq == 1){
+		list_move_tail(&prev->freezer.run_list, &rq->freezer.sched_entities);
+	}
 	end();
 }
 
@@ -288,8 +297,10 @@ static void task_tick_freezer(struct rq *rq, struct task_struct *p,
 	p("%s", "reset time slice");
 	/* need to reschedule and reset its runtime for the next time now */
 	fr_se->remaining_runtime = FREEZER_TIMESLICE;
-	list_rotate_left(&rq->freezer.sched_entities);
-	resched_curr(rq);
+	if(fr_se->on_rq == 1){
+		list_rotate_left(&rq->freezer.sched_entities);
+		resched_curr(rq);
+	}
 	end();
 }
 
