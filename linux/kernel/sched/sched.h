@@ -610,7 +610,6 @@ struct cfs_rq {
 struct freezer_rq {
 	size_t nr_running;
 	struct list_head sched_entities; /* `sched_freezer_entity`s */
-	spinlock_t lock;
 	u64 runtime;
 };
 
