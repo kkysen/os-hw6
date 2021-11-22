@@ -40,10 +40,10 @@ Completed part 6. We added the functions in kernel/sched/freezer.c and included 
 structures in multiple files, including adding some header files and editing sched.h.
 
 ### Part 7
-We implemented the functions in the freezer.c folder. Some of these functions did 
-not do anything because freezer is a round-robin and we are reassigning cpus. Our
+We implemented the functions in `freezer.c`. Some of these functions do
+not do anything because freezer is a round-robin and we are not reassigning cpus. Our
 script works to change our processes to the freezer scheduler.
 
 ### Part 8
-We changed the init_task.c, kthread.c, and core.c files to reflect that
-SCHED_FREEZER is now the default scheduler instead of the normal one.
+We changed the `init_task.c`, `kthread.c`, and `core.c` files to reflect that
+`SCHED_FREEZER` is now the default scheduler instead of `SCHED_NORMAL`.
