@@ -722,7 +722,7 @@ watch-freezer *args: (watch-kernel-files freezer_o "--" args)
 make-set-freezer *args: (make-in "user/test/set-freezer" args)
 
 set-freezer pid: make-set-freezer
-    ./user/test/set-freezer/set-freezer {{pid}}
+    sudo ./user/test/set-freezer/set-freezer {{pid}}
 
 patch-grub:
     sudo patch --input patch/grub.patch --unified --backup --forward /etc/default/grub
